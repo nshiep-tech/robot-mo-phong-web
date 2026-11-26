@@ -113,8 +113,9 @@
   }
   function setView() {
     const B = sim.bounds, W = c2d.width, Hh = c2d.height, bw = B.x1 - B.x0, bh = B.y1 - B.y0, pad = 0.12;
-    const s = Math.min(W / (bw + 2 * pad), Hh / (bh + 2 * pad));
-    VT = { s, ox: (W - bw * s) / 2 - B.x0 * s, oy: (Hh + bh * s) / 2 + B.y0 * s };
+    const top = ($("hud").offsetHeight + 10) * DPR;                 // chừa chỗ cho nhãn trạng thái phía trên
+    const s = Math.min(W / (bw + 2 * pad), (Hh - top) / (bh + 2 * pad));
+    VT = { s, ox: (W - bw * s) / 2 - B.x0 * s, oy: top + (Hh - top + bh * s) / 2 + B.y0 * s };
   }
   const sx = x => VT.ox + x * VT.s, sy = y => VT.oy - y * VT.s, sl = l => l * VT.s;
   const toWorld = (px, py) => [(px - VT.ox) / VT.s, (VT.oy - py) / VT.s];
@@ -404,7 +405,7 @@
       cam.fov = v === "3dfpv" ? 2 * sim.cfg.cam_fov_half * 180 / Math.PI * 0.85 : 50; cam.updateProjectionMatrix();
       if (v === "3d") {
         const house = !!sim.sc?.house;
-        if (house) { cam.position.set(0.3, 7.0, 6.9); controls && controls.target.set(0, 0, 0.9); }
+        if (house) { cam.position.set(0.3, 6.6, 6.0); controls && controls.target.set(0, 0, 0.45); }
         else { cam.position.set(0, 5.2, 4.2); controls && controls.target.set(0, 0, 0); }
       }
       return true;

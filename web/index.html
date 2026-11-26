@@ -47,17 +47,19 @@ header.top{height:var(--head);background:var(--navy);color:#fff;display:flex;ali
 .grp{margin-bottom:16px}
 .grp>.gt{font-size:11.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:0 0 8px;display:flex;align-items:center;gap:6px}
 .grp>.gt::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--red)}
-.view{position:relative;padding:10px;min-height:0}
-.stage{position:relative;width:100%;height:100%;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow);touch-action:none}
+.view{position:relative;padding:10px;min-height:0;display:flex;flex-direction:column;gap:8px}
+.stage{position:relative;width:100%;flex:1;min-height:0;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow);touch-action:none}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.hud{position:absolute;left:10px;top:10px;right:190px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none;z-index:2}
+.hud{position:absolute;left:10px;top:8px;right:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none;z-index:2}
 .pill{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap;color:var(--navy);box-shadow:0 1px 3px rgba(11,37,69,.08)}
 .pill.ok{color:var(--ok);border-color:#A9D8BF;background:#F4FBF7}.pill.bad{color:var(--red);border-color:#F2B8BF;background:#FFF7F8}.pill.warn{color:var(--warn);border-color:#F5CF95;background:#FFFAF2}
 .pill.navy{background:var(--navy);color:#fff;border-color:var(--navy)}
 .dock{position:absolute;z-index:3;display:flex;gap:4px;align-items:center;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:12px;padding:4px;box-shadow:var(--shadow)}
-.dock.views{top:10px;right:10px}
-.dock.play{left:50%;bottom:10px;transform:translateX(-50%);flex-wrap:nowrap}
-.dock.cmdbar{left:10px;right:10px;bottom:64px;max-width:620px;margin:0 auto;padding:5px}
+.ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ctl .dock{position:static;box-shadow:none}
+.ctl .cmdbar{flex:1 1 300px;padding:4px}
+.ctl .play{flex:none}
+.ctl .views{flex:none;margin-left:auto}
 .ib{border:0;background:transparent;border-radius:9px;min-width:40px;height:40px;padding:0 8px;cursor:pointer;color:var(--navy2);font-size:17px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:5px}
 .ib:hover{background:var(--sky2)}
 .ib.on{background:var(--sky);color:var(--navy);box-shadow:inset 0 -2px 0 var(--red)}
@@ -69,7 +71,7 @@ header.top{height:var(--head);background:var(--navy);color:#fff;display:flex;ali
 .cmdbar input{flex:1;height:42px;border:1px solid var(--line);border-radius:9px;padding:0 12px;font-size:16px;min-width:0}
 .mic.rec{background:var(--red);color:#fff;animation:pulse 1.2s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(214,40,57,.18)}}
-.toast{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);max-width:min(560px,90%);background:var(--navy);color:#fff;border-radius:10px;padding:7px 12px;font-size:13px;z-index:4;box-shadow:var(--shadow);text-align:center}
+.toast{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);max-width:min(560px,90%);background:var(--navy);color:#fff;border-radius:10px;padding:7px 12px;font-size:13px;z-index:4;box-shadow:var(--shadow);text-align:center}
 .toast:empty{display:none}
 .btn{min-height:40px;padding:6px 12px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:600;color:var(--navy2);font-size:13.5px}
 .btn:hover{border-color:#B7C4D8;background:var(--sky2)}
@@ -134,7 +136,7 @@ th{color:var(--navy)}
 td.n,th.n{text-align:right;font-family:var(--mono);white-space:nowrap}
 .scroll{overflow-x:auto}
 textarea{width:100%;min-height:170px;border:1px solid var(--line);border-radius:9px;padding:8px;font-family:var(--mono);font-size:12.5px}
-.joy{display:none;position:absolute;left:10px;bottom:64px;z-index:3;grid-template-columns:repeat(3,50px);gap:5px}
+.joy{display:none;position:absolute;left:10px;bottom:10px;z-index:3;grid-template-columns:repeat(3,50px);gap:5px}
 .joy.show{display:grid}
 .joy button{height:48px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.95);font-size:18px;color:var(--navy);cursor:pointer}
 .err{color:var(--red);font-size:12.5px;margin-top:6px}
@@ -157,11 +159,20 @@ textarea{width:100%;min-height:170px;border:1px solid var(--line);border-radius:
   .rail button{min-width:60px;min-height:52px;flex:none}
   .rail .sp{display:none}
   .rail button.on{box-shadow:inset 0 3px 0 var(--red)}
-  .hud{right:10px;top:56px}
-  .dock.cmdbar{bottom:58px}
-  .ib{min-width:38px;height:38px;padding:0 6px}
+  .view{gap:5px}
+  .hud{top:6px;left:6px;right:6px;gap:4px}
+  .pill{font-size:11px;padding:2px 8px}
+  .ctl{gap:5px}
+  .ctl .cmdbar{order:-1;flex-basis:100%}
+  .cmdbar input{height:38px}
+  .ib{min-width:32px;height:36px;padding:0 2px;font-size:15px}
+  .dock{padding:3px;gap:2px}
+  .dock select{height:36px;width:52px;padding:0 2px;font-size:12px}
   .dock.play .hidem{display:none}
-  .toast{bottom:108px}
+  .dock .sep{margin:0}
+  .ctl .play{order:1}
+  .ctl .views{order:2;margin-left:auto}
+  .side{max-height:40vh}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -198,7 +209,7 @@ textarea{width:100%;min-height:170px;border:1px solid var(--line);border-radius:
     <div class="sidebody">
       <section class="tab" data-tab="cmd" data-title="💬 Ra lệnh cho robot">
         <div class="grp"><div class="gt">Chạm để ra lệnh</div><div class="chips" id="hsChips"></div></div>
-        <div class="grp"><div class="gt">Hoặc gõ / nói</div><p class="note">Dùng ô lệnh nổi dưới sân mô phỏng, ví dụ “đi tới tủ lạnh”, “vào phòng ngủ tìm cái giường”. Nút 🎤 nghe tiếng Việt (Chrome).</p></div>
+        <div class="grp"><div class="gt">Hoặc gõ / nói</div><p class="note">Dùng ô lệnh ngay dưới sân mô phỏng, ví dụ “đi tới tủ lạnh”, “vào phòng ngủ tìm cái giường”. Nút 🎤 nghe tiếng Việt (Chrome).</p></div>
       </section>
 
       <section class="tab" data-tab="prog" data-title="🧭 Tiến trình nhiệm vụ">
@@ -342,6 +353,14 @@ textarea{width:100%;min-height:170px;border:1px solid var(--line);border-radius:
       <canvas id="c2d" aria-label="Mặt bằng nhìn từ trên xuống"></canvas>
       <div id="c3dwrap" style="position:absolute;inset:0;display:none"></div>
       <div class="hud" id="hud"></div>
+      <div class="toast" id="hsErr" aria-live="polite"></div>
+      <div class="joy" id="joy" aria-label="Lái tay">
+        <span></span><button data-k="up" aria-label="Tiến">▲</button><span></span>
+        <button data-k="left" aria-label="Rẽ trái">◀</button><button data-k="stop" aria-label="Dừng">■</button><button data-k="right" aria-label="Rẽ phải">▶</button>
+        <span></span><button data-k="down" aria-label="Lùi">▼</button><span></span>
+      </div>
+    </div>
+    <div class="ctl" id="ctl">
       <div class="dock views" role="group" aria-label="Góc nhìn">
         <button class="ib" id="v2d" title="Mặt bằng 2D">🗺️</button><button class="ib on" id="v3d" title="3D xoay">🧊</button>
         <button class="ib" id="v3dFollow" title="Bám xe">🎥</button><button class="ib" id="v3dFpv" title="Mắt robot">👁️</button>
@@ -351,7 +370,6 @@ textarea{width:100%;min-height:170px;border:1px solid var(--line);border-radius:
         <button class="ib mic" id="hsMic" title="Nói lệnh" aria-label="Nói lệnh">🎤</button>
         <button class="ib red" id="hsSend" title="Gửi lệnh" aria-label="Gửi lệnh">➤</button>
       </div>
-      <div class="toast" id="hsErr" aria-live="polite"></div>
       <div class="dock play" role="group" aria-label="Điều khiển mô phỏng">
         <button class="ib primary" id="btnPlay" title="Chạy / dừng">▶</button>
         <button class="ib" id="btnStep" title="Chạy 1 bước (0,1 s)">⏭</button>
@@ -361,11 +379,6 @@ textarea{width:100%;min-height:170px;border:1px solid var(--line);border-radius:
         <select id="selSpeed" title="Tốc độ mô phỏng" aria-label="Tốc độ"><option value="0.5">0,5×</option><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option><option value="10">10×</option></select>
         <span class="sep hidem"></span>
         <span class="pill navy hidem" id="projName" style="box-shadow:none">Robot 2WD</span>
-      </div>
-      <div class="joy" id="joy" aria-label="Lái tay">
-        <span></span><button data-k="up" aria-label="Tiến">▲</button><span></span>
-        <button data-k="left" aria-label="Rẽ trái">◀</button><button data-k="stop" aria-label="Dừng">■</button><button data-k="right" aria-label="Rẽ phải">▶</button>
-        <span></span><button data-k="down" aria-label="Lùi">▼</button><span></span>
       </div>
     </div>
   </main>
