@@ -13,6 +13,7 @@
 
   // ------------------------------------------------------------ trạng thái
   const BUILTIN_BRAINS = [
+    { id: "ban2_phat_lui", file: "brains/ban2_phat_lui.json" },
     { id: "hoc_thang_300k", file: "brains/hoc_thang_300k.json" },
     { id: "cap3_kaggle_5cap", file: "brains/cap3_kaggle_5cap.json" },
     { id: "cap2_kaggle_5cap", file: "brains/cap2_kaggle_5cap.json" },
@@ -22,7 +23,7 @@
     mode: store.get("mode", "house"),
     cfg: Object.assign({}, C.DEFAULT_CFG, store.get("cfg", {})),
     level: store.get("level", 3), seed: store.get("seed2", 6),
-    brains: {}, controllerId: store.get("controller2", "hoc_thang_300k"),
+    brains: {}, controllerId: store.get("controller3", "ban2_phat_lui"),
     customFn: null, keys: { up: 0, down: 0, left: 0, right: 0 },
     playing: false, speed: 2, acc: 0, view: "3d", tool: "none",
     stats: { ep: 0, dich: 0, vacham: 0, hetgio: 0 }, lastBench: null, robots: {},
@@ -554,7 +555,7 @@
     sel.value = S.controllerId; onController();
   }
   function onController() {
-    S.controllerId = $("selBrain").value; store.set("controller2", S.controllerId);
+    S.controllerId = $("selBrain").value; store.set("controller3", S.controllerId);
     $("joy").classList.toggle("show", S.controllerId === "manual");
     const b = S.brains[S.controllerId];
     $("brainInfo").textContent = b ? `Mạng MLP ${b.layers.map(l => l.b.length).join("-")}, ${b.params.toLocaleString("vi-VN")} tham số, đầu vào 12 số → (v, ω).`
