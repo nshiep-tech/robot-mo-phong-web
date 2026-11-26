@@ -179,12 +179,19 @@
       this.motorGain = rnd ? [this.R.uniform(0.85, 1.15), this.R.uniform(0.85, 1.15)] : [1, 1];
       this.noise = opts.randomize === false ? 0 : this.L.noise;
       this.miss = opts.randomize === false ? 0 : this.L.miss;
-      // tường bao quanh sân
+      this.endOnGoal = opts.endOnGoal !== false;          // nhà ảo: tới đích trung gian không kết thúc lượt
+      this.maxSteps = opts.maxSteps || c.max_steps;
+      this.bumpMode = !!opts.bump;                         // nhà ảo: chạm nhẹ không kết thúc (có công tắc chạm)
+      this.bumps = 0; this.bumped = false;
+      // khung sân: vuông ±arena/2, hoặc chữ nhật theo sc.bounds (nhà ảo)
+      const B = this.sc.bounds || { x0: -half, x1: half, y0: -half, y1: half };
+      this.bounds = B;
+      const cx = (B.x0 + B.x1) / 2, cy = (B.y0 + B.y1) / 2, hw = (B.x1 - B.x0) / 2, hh = (B.y1 - B.y0) / 2;
       this.border = [
-        { kind: "wall", x: 0, y: half, hx: half, hy: 0.05, border: true },
-        { kind: "wall", x: 0, y: -half, hx: half, hy: 0.05, border: true },
-        { kind: "wall", x: half, y: 0, hx: 0.05, hy: half, border: true },
-        { kind: "wall", x: -half, y: 0, hx: 0.05, hy: half, border: true },
+        { kind: "wall", x: cx, y: B.y1, hx: hw, hy: 0.05, border: true },
+        { kind: "wall", x: cx, y: B.y0, hx: hw, hy: 0.05, border: true },
+        { kind: "wall", x: B.x1, y: cy, hx: 0.05, hy: hh, border: true },
+        { kind: "wall", x: B.x0, y: cy, hx: 0.05, hy: hh, border: true },
       ];
       const s = this.sc.start;
       this.x = s.x; this.y = s.y; this.yaw = s.yaw;
@@ -200,6 +207,23 @@
     }
 
     allObstacles() { return this.border.concat(this.sc.obstacles); }
+
+    /* Đường nhìn từ xe tới điểm (x,y) có bị tường che không (camera nhìn qua được đồ thấp) */
+    lineOfSight(x, y) {
+      const dx = x - this.x, dy = y - this.y, L = Math.hypot(dx, dy);
+      if (L < 1e-6) return true;
+      for (const o of this.allObstacles()) {
+        if (o.kind !== "wall") continue;
+        if (rayBox(this.x, this.y, dx / L, dy / L, o.x, o.y, o.hx, o.hy) < L - 0.12) return false;   // mốc dán trên mặt tường
+      }
+      return true;
+    }
+    /* Camera có thấy điểm (x,y) không: trong góc nhìn, trong tầm, không bị tường che */
+    sees(x, y, range, fovHalf = this.cfg.cam_fov_half) {
+      const dx = x - this.x, dy = y - this.y, d = Math.hypot(dx, dy);
+      const a = wrap(Math.atan2(dy, dx) - this.yaw);
+      return d <= range && Math.abs(a) <= fovHalf && this.lineOfSight(x, y);
+    }
 
     goalPolar() {
       const dx = this.sc.goal.x - this.x, dy = this.sc.goal.y - this.y;
@@ -288,13 +312,15 @@
       const c = this.cfg;
       action = [clamp(action[0], -1, 1), clamp(action[1], -1, 1)];
       const target = this.kinematics(action).map((t, i) => t * this.motorGain[i]);
-      const dtc = 1 / c.control_hz, half = c.arena / 2 - 0.3;
+      const dtc = 1 / c.control_hz, B = this.bounds, m = 0.3;
       for (const o of this.sc.obstacles) if (o.kind === "mover") {     // người đi lại
         o.x += o.vx * dtc; o.y += o.vy * dtc;
-        if (Math.abs(o.x) > half) o.vx = -o.vx;
-        if (Math.abs(o.y) > half) o.vy = -o.vy;
+        const Z = o.zone ? { x0: o.zone[0], x1: o.zone[1], y0: o.zone[2], y1: o.zone[3] } : B, mm = o.zone ? 0 : m;
+        if ((o.x < Z.x0 + mm && o.vx < 0) || (o.x > Z.x1 - mm && o.vx > 0)) o.vx = -o.vx;   // đi trong vùng của mình
+        if ((o.y < Z.y0 + mm && o.vy < 0) || (o.y > Z.y1 - mm && o.vy > 0)) o.vy = -o.vy;
       }
       const sub = Math.round(c.physics_hz / c.control_hz), dt = 1 / c.physics_hz;
+      const px = this.x, py = this.y, pyaw = this.yaw;
       let collided = false;
       for (let k = 0; k < sub; k++) {                                   // mô hình motor bậc 1
         for (let i = 0; i < 2; i++) {
@@ -306,15 +332,20 @@
         this.yaw = wrap(this.yaw + w * dt);
       }
       for (const o of this.allObstacles()) if (circleHits(this.x, this.y, c.collide_r, o)) { collided = true; this.hitObstacle = o; break; }
+      this.bumped = false;
+      if (collided && this.bumpMode) {                    // công tắc chạm: dừng lại ở chỗ cũ, không kết thúc lượt
+        this.x = px; this.y = py; this.yaw = pyaw; this.wheel = [0, 0]; this.wheelCmd = [0, 0];
+        this.bumped = true; this.bumps++; collided = false;
+      }
       this.steps++;
       this.trail.push([this.x, this.y]);
       const [gd] = this.goalPolar();
       let reward = (this.prevGoalDist - gd) * 10 - 0.01
         - 0.02 * (Math.abs(action[0] - this.prevAction[0]) + Math.abs(action[1] - this.prevAction[1]));
       this.prevGoalDist = gd;
-      if (gd < c.goal_tol) { reward += 100; this.done = true; this.result = "dich"; }
+      if (gd < c.goal_tol && this.endOnGoal) { reward += 100; this.done = true; this.result = "dich"; }
       else if (collided) { reward -= 100; this.done = true; this.result = "vacham"; }
-      else if (this.steps >= c.max_steps) { this.done = true; this.result = "hetgio"; }
+      else if (this.steps >= this.maxSteps) { this.done = true; this.result = "hetgio"; }
       this.ret += reward;
       this.prevAction = action;
       this.obs = this.observe();
@@ -393,5 +424,5 @@
     return res;
   }
 
-  return { DEFAULT_CFG, LEVELS, OBS_LABELS, rng, wrap, clamp, generateScenario, Sim, MLPBrain, npzToBrainJSON, benchmark };
+  return { DEFAULT_CFG, LEVELS, OBS_LABELS, rng, wrap, clamp, generateScenario, Sim, MLPBrain, npzToBrainJSON, benchmark, rayBox };
 });

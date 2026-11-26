@@ -2,268 +2,353 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Phòng thí nghiệm robot ảo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B2545">
+<title>Phòng thí nghiệm robot ảo – NGUYỄN SỸ HIỆP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-/* VOICE: phòng thí nghiệm kỹ thuật – rõ ràng, chính xác, thân thiện cho sinh viên
-   IDEA: mặt bàn thí nghiệm nhìn từ trên xuống, sân 5×5 m kẻ ô như giấy kỹ thuật
-   PICTURE: sân mô phỏng 3D/2D chiếm phần lớn màn hình đầu, xe tự lái trên đó
-   COLOUR and TYPE: nền trắng ngà, mực xanh kỹ thuật #0b4f8a, cam cảnh báo #d9622b; Be Vietnam Pro + JetBrains Mono cho số
-   LAYOUT: sân bên trái (hoặc trên cùng ở điện thoại), bảng điều khiển gấp gọn bên phải */
-:root{color-scheme:light;--bg:#f6f5f1;--card:#ffffff;--ink:#17212b;--muted:#5b6670;--line:#dcdad3;--blue:#0b4f8a;--blue2:#e3eef8;--orange:#d9622b;--green:#2e7d32;--red:#c62828;--amber:#a86a00;--radius:12px}
+/* Tông chủ đạo: xanh hải quân – trắng – đỏ. Nền sáng, chữ tối. */
+:root{color-scheme:light;
+  --navy:#0B2545;--navy2:#13315C;--navy3:#1F4E8C;--sky:#EAF0F8;--sky2:#F4F7FC;
+  --red:#D62839;--red2:#FDECEE;--ink:#0E1A2B;--muted:#5A6B82;--line:#DCE3EE;--bg:#F3F6FA;
+  --ok:#1E7B4F;--ok2:#E6F4EC;--warn:#A15C00;--warn2:#FFF3E0;--card:#fff;--r:14px;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--shadow:0 1px 2px rgba(11,37,69,.06),0 6px 20px rgba(11,37,69,.06)}
 *{box-sizing:border-box;min-width:0}
-html{scroll-padding-top:72px}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;overflow-x:clip}
-header.top{background:var(--card);border-bottom:1px solid var(--line);padding:10px max(3vw,14px);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-header.top .who{font-weight:700;letter-spacing:.2px}
-header.top .sch{color:var(--muted);font-size:13px}
-header.top .proj{margin-left:auto;font-size:13px;color:var(--blue);background:var(--blue2);padding:4px 10px;border-radius:999px;font-weight:600}
-main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;padding:14px max(2vw,10px);max-width:1500px;margin:0 auto}
-@media(max-width:900px){main{grid-template-columns:minmax(0,1fr)}}
-h1{font-size:clamp(20px,2.6vw,28px);line-height:1.15;margin:0 0 4px;text-wrap:balance}
-.sub{color:var(--muted);font-size:14px;margin:0 0 10px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px}
-.stage{position:relative;width:min(100%,78vh);margin:0 auto;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#fbfaf7;touch-action:none}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;overflow-x:clip}
+/* Đầu trang */
+header.top{background:var(--navy);color:#fff;padding:12px max(3vw,14px) 12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-bottom:3px solid var(--red)}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:42px;height:42px;border-radius:10px;background:#fff;display:grid;place-items:center;flex:none}
+.logo svg{width:28px;height:28px}
+.who{font-weight:700;font-size:16px;letter-spacing:.4px}
+.sch{color:#C9D6EA;font-size:12.5px;line-height:1.35}
+.seg{margin-left:auto;display:flex;background:rgba(255,255,255,.1);border-radius:12px;padding:4px;gap:4px}
+.seg button{min-height:40px;border:0;background:transparent;color:#DCE6F5;border-radius:9px;padding:6px 14px;font-weight:600;cursor:pointer;font:inherit;font-size:14px}
+.seg button.on{background:#fff;color:var(--navy)}
+@media(max-width:720px){.seg{margin-left:0;width:100%}.seg button{flex:1}}
+/* Bố cục */
+main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:16px;padding:16px max(2vw,10px) 8px;max-width:1560px;margin:0 auto}
+@media(max-width:980px){main{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow)}
+.card+.card{margin-top:14px}
+h1{font-size:clamp(19px,2.3vw,25px);line-height:1.2;margin:0;color:var(--navy);text-wrap:balance}
+h2{font-size:15px;margin:0 0 10px;color:var(--navy);display:flex;align-items:center;gap:8px}
+h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--red)}
+.sub{color:var(--muted);font-size:13.5px;margin:4px 0 12px}
+.titlebar{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+/* Sân */
+.stage{position:relative;width:100%;margin:0 auto;aspect-ratio:4/3;max-height:74vh;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff;touch-action:none}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.hud{position:absolute;left:8px;top:8px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
-.pill{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;white-space:nowrap}
-.pill.ok{color:var(--green);border-color:#a5d6a7}.pill.bad{color:var(--red);border-color:#ef9a9a}.pill.warn{color:var(--amber);border-color:#ffcc80}
-.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.hud{position:absolute;left:10px;top:10px;right:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
+.pill{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;white-space:nowrap;color:var(--navy);box-shadow:0 1px 3px rgba(11,37,69,.08)}
+.pill.ok{color:var(--ok);border-color:#A9D8BF;background:#F4FBF7}.pill.bad{color:var(--red);border-color:#F2B8BF;background:#FFF7F8}.pill.warn{color:var(--warn);border-color:#F5CF95;background:#FFFAF2}
+.pill.navy{background:var(--navy);color:#fff;border-color:var(--navy)}
+/* Nút */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
 button,select,input,textarea{font:inherit;font-size:15px;color:var(--ink)}
-button{min-height:42px;padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer}
-button:hover{border-color:#b9b6ad}
-button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #8cb8e0;outline-offset:1px}
-button.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
-button.on{background:var(--blue2);border-color:var(--blue);color:var(--blue);font-weight:600}
+button{min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:600;color:var(--navy2)}
+button:hover{border-color:#B7C4D8;background:var(--sky2)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #9DB8E0;outline-offset:1px}
+button.primary{background:var(--red);border-color:var(--red);color:#fff}
+button.primary:hover{background:#BF1F30}
+button.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+button.on{background:var(--sky);border-color:var(--navy3);color:var(--navy)}
 button[disabled]{opacity:.5;cursor:not-allowed}
-select,input[type=number],input[type=text]{min-height:42px;padding:6px 10px;border-radius:9px;border:1px solid var(--line);background:#fff}
+select,input[type=number],input[type=text]{min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:#fff}
 input[type=number]{width:96px;font-size:16px}
+input[type=text]{font-size:16px}
 label.inline{display:inline-flex;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
+.seg2{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg2 button{border:0;border-radius:0;min-height:40px;padding:6px 12px;font-size:13.5px}
+.seg2 button+button{border-left:1px solid var(--line)}
+/* Ra lệnh */
+.cmd{display:flex;gap:8px}
+.cmd input{flex:1}
+.mic{width:48px;padding:0;font-size:20px}
+.mic.rec{background:var(--red);border-color:var(--red);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(214,40,57,.18)}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13.5px;background:var(--sky2);color:var(--navy2);min-height:36px;font-weight:600}
+.chip:hover{background:var(--sky);border-color:var(--navy3)}
+.chip.soon{color:var(--muted);background:#F5F6F8;font-weight:500}
+/* Tiến trình */
+.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:4px 0 12px}
+.step{position:relative;text-align:center;font-size:12px;color:var(--muted);padding-top:30px;line-height:1.25}
+.step::before{content:attr(data-n);position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:24px;border-radius:50%;border:2px solid var(--line);background:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;color:var(--muted)}
+.step.now{color:var(--navy);font-weight:600}.step.now::before{border-color:var(--red);color:var(--red)}
+.step.done{color:var(--navy2)}.step.done::before{content:"✓";background:var(--navy);border-color:var(--navy);color:#fff}
+.log{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--sky2);padding:6px 8px;font-size:13.5px}
+.log div{padding:5px 2px 5px 18px;border-bottom:1px dashed #DDE4EE;position:relative}
+.log div:last-child{border-bottom:0}
+.log div::before{content:"";position:absolute;left:4px;top:12px;width:7px;height:7px;border-radius:50%;background:var(--navy3)}
+.log .ok::before{background:var(--ok)}.log .warn::before{background:#E0A100}.log .bad::before{background:var(--red)}
+.log .t{color:var(--muted);font-family:var(--mono);font-size:11.5px;margin-right:6px}
+/* Số liệu */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;text-align:center}
+.stats div{background:var(--sky2);border:1px solid #E3EAF3;border-radius:10px;padding:8px 4px}
+.stats span{display:block;font-size:11.5px;color:var(--muted);line-height:1.25}
+.big{font-size:20px;font-weight:700;font-family:var(--mono);color:var(--navy)}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:6px 0;border-bottom:1px solid #EEF2F7}
+.kv b{color:var(--navy);text-align:right}
 details{border-top:1px solid var(--line)}
 details:first-of-type{border-top:0}
-summary{cursor:pointer;padding:12px 2px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary{cursor:pointer;padding:12px 2px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--navy)}
 summary::-webkit-details-marker{display:none}
 summary::after{content:"▾";color:var(--muted);transition:transform .2s}
 details[open] summary::after{transform:rotate(180deg)}
 .sec{padding:0 2px 14px}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.kv{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:3px 0;border-bottom:1px dashed #eceae4}
-.kv b{font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:600}
 .obsrow{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 54px;gap:8px;align-items:center;font-size:13px;padding:2px 0}
-.bar{height:10px;background:#eef0f2;border-radius:6px;position:relative;overflow:hidden}
-.bar i{position:absolute;top:0;bottom:0;background:var(--blue);border-radius:6px}
-.bar.sym::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:#9aa4ad}
-.num{font-family:"JetBrains Mono",ui-monospace,monospace;text-align:right;font-size:12.5px}
+.bar{height:10px;background:#EAEFF6;border-radius:6px;position:relative;overflow:hidden}
+.bar i{position:absolute;top:0;bottom:0;background:var(--navy3);border-radius:6px}
+.bar.sym::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:#93A3BA}
+.num{font-family:var(--mono);text-align:right;font-size:12.5px}
 .muted{color:var(--muted);font-size:13px}
-.big{font-size:22px;font-weight:700;font-family:"JetBrains Mono",ui-monospace,monospace}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;text-align:center}
-.stats div{background:#f7f7f4;border-radius:8px;padding:6px}
-.stats span{display:block;font-size:12px;color:var(--muted)}
 table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{border-bottom:1px solid #ecebe6;padding:6px;text-align:left}
-td.n,th.n{text-align:right;font-family:"JetBrains Mono",ui-monospace,monospace;white-space:nowrap}
+th,td{border-bottom:1px solid #E8EDF4;padding:6px;text-align:left}
+th{color:var(--navy);font-size:13px}
+td.n,th.n{text-align:right;font-family:var(--mono);white-space:nowrap}
 .scroll{overflow-x:auto}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px;background:#fff}
-.chip.soon{color:var(--muted);background:#f4f3ef}
-textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:9px;padding:8px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px}
-.joy{display:none;grid-template-columns:repeat(3,56px);gap:6px;justify-content:center;margin-top:8px}
+textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:10px;padding:8px;font-family:var(--mono);font-size:13px}
+.joy{display:none;grid-template-columns:repeat(3,58px);gap:6px;justify-content:center;margin-top:10px}
 .joy.show{display:grid}
-.joy button{min-height:52px;font-size:20px}
+.joy button{min-height:54px;font-size:20px}
 .net{display:grid;grid-template-columns:repeat(32,1fr);gap:1px;margin:4px 0}
-.net i{aspect-ratio:1;border-radius:2px;background:#eee}
-.modal{position:fixed;inset:0;background:rgba(20,30,40,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.net i{aspect-ratio:1;border-radius:2px;background:#EEF1F5}
+.modal{position:fixed;inset:0;background:rgba(11,37,69,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
 .modal.show{display:flex}
-.modal .box{background:#fff;border-radius:14px;max-width:720px;width:100%;padding:16px;max-height:90vh;overflow:auto}
+.modal .box{background:#fff;border-radius:16px;max-width:720px;width:100%;padding:16px;max-height:90vh;overflow:auto}
 .err{color:var(--red);font-size:13px;margin-top:6px}
-.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12.5px;color:var(--muted);margin-top:8px}
-.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;background:var(--c)}
-footer{color:var(--muted);font-size:12.5px;text-align:center;padding:16px}
-@media(max-width:600px){button{padding:8px 11px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.obsrow{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 48px}}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted);margin-top:10px}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.layers{display:grid;gap:6px;font-size:13.5px}
+.layers div{display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px;align-items:start;background:var(--sky2);border-radius:10px;padding:8px}
+.layers b{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--navy);color:#fff;font-size:12px}
+.layers div:last-child b{background:var(--red)}
+.hide{display:none!important}
+footer{color:var(--muted);font-size:12.5px;text-align:center;padding:14px 16px 24px}
+@media(max-width:600px){button{padding:8px 11px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.obsrow{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 48px}.step{font-size:11px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 </head>
 <body>
 <header class="top">
-  <div><div class="who">NGUYỄN SỸ HIỆP</div><div class="sch">Trường Đại học Công nghệ Thông tin và Truyền thông (ICTU) – Đại học Thái Nguyên</div></div>
-  <div class="proj" id="projName">Dự án: Robot 2 bánh (2WD)</div>
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="5" y="9" width="22" height="14" rx="4" fill="#0B2545"/><circle cx="11.5" cy="16" r="2.6" fill="#fff"/><circle cx="20.5" cy="16" r="2.6" fill="#fff"/><rect x="14" y="3" width="4" height="6" rx="1.5" fill="#D62839"/><rect x="3" y="24" width="8" height="4" rx="2" fill="#13315C"/><rect x="21" y="24" width="8" height="4" rx="2" fill="#13315C"/></svg></div>
+    <div><div class="who">NGUYỄN SỸ HIỆP</div><div class="sch">Trường Đại học Công nghệ Thông tin và Truyền thông – Đại học Thái Nguyên</div></div>
+  </div>
+  <div class="seg" role="tablist" aria-label="Chế độ">
+    <button id="modeHouse" class="on" role="tab">🏠 Nhà thông minh</button>
+    <button id="modeTrain" role="tab">🎯 Sân huấn luyện 5 cấp</button>
+  </div>
 </header>
 
 <main>
-  <section class="card">
-    <h1 id="headline">Phòng thí nghiệm robot ảo</h1>
-    <p class="sub">Nạp bộ não đã huấn luyện, thả xe vào sân 5×5 m và xem nó tự lái, né vật cản theo thời gian thực.</p>
-    <div class="stage" id="stage">
-      <canvas id="c2d" aria-label="Sân mô phỏng nhìn từ trên xuống"></canvas>
-      <div id="c3dwrap" style="position:absolute;inset:0;display:none"></div>
-      <div class="hud" id="hud"></div>
-    </div>
-    <div class="toolbar">
-      <button class="primary" id="btnPlay">▶ Chạy</button>
-      <button id="btnStep" title="Chạy 1 bước (0,1 giây)">⏭ 1 bước</button>
-      <button id="btnReset" title="Đặt xe về chỗ cũ, giữ bản đồ">↺ Chạy lại</button>
-      <button id="btnNew" title="Tạo bản đồ mới cùng cấp">🎲 Bản đồ mới</button>
-      <select id="selSpeed" aria-label="Tốc độ mô phỏng">
-        <option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option><option value="10">10×</option>
-      </select>
-      <label class="inline"><input type="checkbox" id="chkAuto" checked> Tự chạy lượt mới</label>
-    </div>
-    <div class="toolbar">
-      <span class="muted">Góc nhìn:</span>
-      <button id="v2d" class="on">2D từ trên</button>
-      <button id="v3d">3D xoay</button>
-      <button id="v3dFollow">3D bám xe</button>
-      <button id="v3dFpv">Mắt robot</button>
-    </div>
-    <div class="legend">
-      <span style="--c:#0b4f8a">Xe</span><span style="--c:#2e7d32">Đích</span><span style="--c:#d9822b">Vật cản</span>
-      <span style="--c:#7a7f86">Tường</span><span style="--c:#c2185b">Người đi lại</span><span style="--c:#f2c14e">Tia siêu âm</span><span style="--c:#9cc3e6">Tầm nhìn camera</span>
-    </div>
-    <div class="joy" id="joy" aria-label="Lái tay">
-      <span></span><button data-k="up" aria-label="Tiến">▲</button><span></span>
-      <button data-k="left" aria-label="Rẽ trái">◀</button><button data-k="stop" aria-label="Dừng">■</button><button data-k="right" aria-label="Rẽ phải">▶</button>
-      <span></span><button data-k="down" aria-label="Lùi">▼</button><span></span>
+  <section>
+    <div class="card">
+      <div class="titlebar">
+        <div>
+          <h1 id="headline">Robot nhận lệnh trong nhà</h1>
+          <p class="sub" id="subline">Ra lệnh “đi tới tủ lạnh”: robot tự nhận phòng, tìm mốc cửa, qua cửa, nhận ra đồ vật bằng YOLO và để bộ não PPO lái tới nơi.</p>
+        </div>
+        <span class="pill navy" id="projName">Robot 2 bánh (2WD)</span>
+      </div>
+      <div class="stage" id="stage">
+        <canvas id="c2d" aria-label="Mặt bằng nhìn từ trên xuống"></canvas>
+        <div id="c3dwrap" style="position:absolute;inset:0;display:none"></div>
+        <div class="hud" id="hud"></div>
+      </div>
+      <div class="toolbar">
+        <button class="navy" id="btnPlay">▶ Chạy</button>
+        <button id="btnStep" title="Chạy 1 bước (0,1 giây)">⏭ 1 bước</button>
+        <button id="btnReset" title="Đặt xe về chỗ xuất phát">↺ Về chỗ cũ</button>
+        <button id="btnNew">🎲 Bản đồ mới</button>
+        <select id="selSpeed" aria-label="Tốc độ mô phỏng">
+          <option value="0.5">0,5×</option><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option><option value="10">10×</option>
+        </select>
+        <label class="inline" id="autoWrap"><input type="checkbox" id="chkAuto" checked> Tự chạy lượt mới</label>
+      </div>
+      <div class="toolbar">
+        <div class="seg2" role="group" aria-label="Góc nhìn">
+          <button id="v2d">Mặt bằng 2D</button><button id="v3d" class="on">3D xoay</button><button id="v3dFollow">Bám xe</button><button id="v3dFpv">Mắt robot</button>
+        </div>
+        <label class="inline">Bộ não <select id="selBrain" style="max-width:260px"></select></label>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="joy" id="joy" aria-label="Lái tay">
+        <span></span><button data-k="up" aria-label="Tiến">▲</button><span></span>
+        <button data-k="left" aria-label="Rẽ trái">◀</button><button data-k="stop" aria-label="Dừng">■</button><button data-k="right" aria-label="Rẽ phải">▶</button>
+        <span></span><button data-k="down" aria-label="Lùi">▼</button><span></span>
+      </div>
     </div>
   </section>
 
-  <aside class="card" id="panel">
-    <details open>
-      <summary>1. Kịch bản và bộ não</summary>
-      <div class="sec">
-        <div class="grid2">
-          <label>Cấp độ<br><select id="selLevel" style="width:100%"></select></label>
-          <label>Mã bản đồ (seed)<br><input type="number" id="inSeed" value="1" min="1" style="width:100%"></label>
+  <aside>
+    <!-- ===================== CHẾ ĐỘ NHÀ THÔNG MINH ===================== -->
+    <div id="panelHouse">
+      <div class="card">
+        <h2><span class="dot"></span>Ra lệnh cho robot</h2>
+        <div class="cmd">
+          <input type="text" id="hsCmd" placeholder="Ví dụ: đi tới tủ lạnh" aria-label="Lệnh" enterkeyhint="go">
+          <button class="mic" id="hsMic" aria-label="Nói lệnh">🎤</button>
+          <button class="primary" id="hsSend">Gửi</button>
         </div>
-        <label style="display:block;margin-top:8px">Bộ điều khiển<br><select id="selBrain" style="width:100%"></select></label>
-        <div class="toolbar">
-          <label class="inline"><input type="checkbox" id="chkNoise" checked> Nhiễu & vật lý thay đổi (như lúc huấn luyện)</label>
+        <div class="chips" id="hsChips"></div>
+        <div class="err" id="hsErr"></div>
+        <div class="toolbar" style="margin-top:8px">
+          <button id="hsPlace" title="Chạm lên mặt bằng để đặt xe">📍 Đặt xe chỗ khác</button>
+          <label class="inline"><input type="checkbox" id="hsPeople"> Có người đi lại</label>
+          <label class="inline"><input type="checkbox" id="hsBump" checked> Công tắc chạm</label>
         </div>
-        <div class="toolbar">
-          <button id="btnUpload">📂 Tải bộ não (.npz / .json)</button>
-          <input type="file" id="fileBrain" accept=".npz,.json" hidden>
-        </div>
-        <div class="err" id="brainErr"></div>
-        <p class="muted" id="brainInfo"></p>
       </div>
-    </details>
 
-    <details open>
-      <summary>2. Robot đang nghĩ gì (thời gian thực)</summary>
-      <div class="sec">
+      <div class="card">
+        <h2><span class="dot"></span>Tiến trình nhiệm vụ</h2>
+        <div class="steps" id="hsSteps">
+          <div class="step" data-n="1">Hiểu lệnh</div><div class="step" data-n="2">Nhận phòng</div><div class="step" data-n="3">Qua cửa</div><div class="step" data-n="4">Tìm đồ vật</div><div class="step" data-n="5">Tới nơi</div>
+        </div>
         <div class="stats">
-          <div><b class="big" id="stStep">0</b><span>bước</span></div>
-          <div><b class="big" id="stV">0,00</b><span>tiến v (m/s)</span></div>
-          <div><b class="big" id="stW">0,00</b><span>quay ω (rad/s)</span></div>
-          <div><b class="big" id="stRet">0</b><span>điểm thưởng</span></div>
+          <div><b class="big" id="hsRoom">–</b><span>đang ở</span></div>
+          <div><b class="big" id="hsTime">0</b><span>giây</span></div>
+          <div><b class="big" id="hsDist">–</b><span>cách đích (m)</span></div>
+          <div><b class="big" id="hsBumps">0</b><span>lần chạm</span></div>
         </div>
-        <p class="muted" style="margin:10px 0 4px">12 số đầu vào của bộ não</p>
-        <div id="obsList"></div>
-        <p class="muted" style="margin:10px 0 2px">Nơ-ron lớp ẩn (xanh = âm, cam = dương)</p>
-        <div class="net" id="net1"></div><div class="net" id="net2"></div>
+        <p class="muted" style="margin:10px 0 6px" id="hsPhase">Chờ lệnh</p>
+        <div class="log" id="hsLog" aria-live="polite"></div>
       </div>
-    </details>
 
-    <details>
-      <summary>3. Thống kê và chấm điểm hàng loạt</summary>
-      <div class="sec">
-        <div class="stats">
-          <div><b class="big" id="cEp">0</b><span>lượt đã chạy</span></div>
-          <div><b class="big" id="cOk" style="color:var(--green)">0</b><span>tới đích</span></div>
-          <div><b class="big" id="cHit" style="color:var(--red)">0</b><span>va chạm</span></div>
-          <div><b class="big" id="cTo" style="color:var(--amber)">0</b><span>hết giờ</span></div>
+      <div class="card">
+        <h2><span class="dot"></span>Robot biết đường bằng cách nào</h2>
+        <div class="layers">
+          <div><b>1</b><span><b style="all:unset;font-weight:700">Hiểu lệnh</b> – tách tên đồ vật/phòng từ câu nói (xe thật: Whisper + Qwen).</span></div>
+          <div><b>2</b><span><b style="all:unset;font-weight:700">Nhận phòng</b> – quay tìm mốc ArUco dán trên tường. Mốc số 11–13: phòng khách, 21–22: bếp, 31–32: phòng ngủ.</span></div>
+          <div><b>3</b><span><b style="all:unset;font-weight:700">Sơ đồ mốc</b> – biết “muốn vào bếp thì qua mốc số 1”. Không cần tọa độ, như người hỏi đường.</span></div>
+          <div><b>4</b><span><b style="all:unset;font-weight:700">Nhận đồ vật</b> – YOLO nhìn thấy tủ lạnh, giường, sofa… thì lấy làm đích.</span></div>
+          <div><b>5</b><span><b style="all:unset;font-weight:700">Bộ não PPO lái</b> – đi tới mốc/đồ vật đang nhìn thấy, né vật. Bị chắn thì quay quét siêu âm tìm lối vòng.</span></div>
         </div>
-        <div class="toolbar">
-          <label class="inline">Số lượt mỗi cấp <select id="selBenchN"><option>20</option><option selected>50</option><option>100</option><option>200</option></select></label>
-          <button class="primary" id="btnBench">Chấm 5 cấp</button>
-          <button id="btnCompare">So sánh các bộ não</button>
-        </div>
-        <div id="benchOut" class="scroll" style="margin-top:8px"></div>
-        <div class="toolbar"><button id="btnBenchCsv" disabled>📋 Lấy bảng CSV</button><button id="btnResetStats">Xóa thống kê</button></div>
       </div>
-    </details>
+    </div>
 
-    <details>
-      <summary>4. Sửa bản đồ</summary>
-      <div class="sec">
-        <p class="muted" style="margin-top:0">Chọn công cụ rồi chạm vào sân (2D hoặc 3D).</p>
-        <div class="toolbar" id="tools">
-          <button data-tool="none" class="on">Không sửa</button>
-          <button data-tool="cyl">+ Trụ tròn</button>
-          <button data-tool="box">+ Hộp</button>
-          <button data-tool="wall">+ Tường 2 m</button>
-          <button data-tool="mover">+ Người đi lại</button>
-          <button data-tool="goal">Đặt đích</button>
-          <button data-tool="start">Đặt xe</button>
-          <button data-tool="rotate">Xoay xe 45°</button>
-          <button data-tool="del">Xóa vật</button>
+    <!-- ===================== CHẾ ĐỘ SÂN HUẤN LUYỆN ===================== -->
+    <div class="card hide" id="panel">
+      <details open>
+        <summary>1. Kịch bản và bộ não</summary>
+        <div class="sec">
+          <div class="grid2">
+            <label>Cấp độ<br><select id="selLevel" style="width:100%"></select></label>
+            <label>Mã bản đồ (seed)<br><input type="number" id="inSeed" value="1" min="1" style="width:100%"></label>
+          </div>
+          <div class="toolbar">
+            <label class="inline"><input type="checkbox" id="chkNoise" checked> Nhiễu và vật lý thay đổi (như lúc huấn luyện)</label>
+          </div>
+          <div class="toolbar">
+            <button id="btnUpload">📂 Tải bộ não (.npz / .json)</button>
+            <input type="file" id="fileBrain" accept=".npz,.json" hidden>
+          </div>
+          <div class="err" id="brainErr"></div>
+          <p class="muted" id="brainInfo"></p>
         </div>
-        <div class="toolbar">
-          <button id="btnClear">Xóa hết vật cản</button>
-          <button id="btnSaveMap">💾 Lưu bản đồ</button>
-          <button id="btnLoadMap">📥 Nạp bản đồ</button>
-          <button id="btnExportMap">📋 Xuất JSON</button>
-          <button id="btnImportMap">Dán JSON</button>
+      </details>
+      <details open>
+        <summary>2. Robot đang nghĩ gì</summary>
+        <div class="sec">
+          <div class="stats">
+            <div><b class="big" id="stStep">0</b><span>bước</span></div>
+            <div><b class="big" id="stV">0,00</b><span>tiến v (m/s)</span></div>
+            <div><b class="big" id="stW">0,00</b><span>quay ω (rad/s)</span></div>
+            <div><b class="big" id="stRet">0</b><span>điểm thưởng</span></div>
+          </div>
+          <p class="muted" style="margin:10px 0 4px">12 số đầu vào của bộ não</p>
+          <div id="obsList"></div>
+          <p class="muted" style="margin:10px 0 2px">Nơ-ron lớp ẩn (xanh = âm, đỏ = dương)</p>
+          <div class="net" id="net1"></div><div class="net" id="net2"></div>
         </div>
-        <p class="muted" id="mapInfo"></p>
-      </div>
-    </details>
-
-    <details>
-      <summary>5. Thông số robot</summary>
-      <div class="sec">
-        <p class="muted" style="margin-top:0">Đổi theo xe thật khi có khung. Bộ não học với thông số mặc định, đổi nhiều sẽ lái kém hơn – đó cũng là cách kiểm tra độ bền.</p>
-        <div class="grid2" id="cfgForm"></div>
-        <div class="toolbar">
-          <button class="primary" id="btnCfgApply">Áp dụng</button>
-          <button id="btnCfgDefault">Về mặc định</button>
-          <button id="btnCfgExport">📋 Xuất hồ sơ robot</button>
+      </details>
+      <details>
+        <summary>3. Thống kê và chấm điểm</summary>
+        <div class="sec">
+          <div class="stats">
+            <div><b class="big" id="cEp">0</b><span>lượt</span></div>
+            <div><b class="big" id="cOk" style="color:var(--ok)">0</b><span>tới đích</span></div>
+            <div><b class="big" id="cHit" style="color:var(--red)">0</b><span>va chạm</span></div>
+            <div><b class="big" id="cTo" style="color:var(--warn)">0</b><span>hết giờ</span></div>
+          </div>
+          <div class="toolbar">
+            <label class="inline">Lượt mỗi cấp <select id="selBenchN"><option>20</option><option selected>50</option><option>100</option><option>200</option></select></label>
+            <button class="primary" id="btnBench">Chấm 5 cấp</button>
+            <button id="btnCompare">So sánh các bộ não</button>
+          </div>
+          <div id="benchOut" class="scroll" style="margin-top:8px"></div>
+          <div class="toolbar"><button id="btnBenchCsv" disabled>📋 Lấy bảng CSV</button><button id="btnResetStats">Xóa thống kê</button></div>
         </div>
-      </div>
-    </details>
-
-    <details>
-      <summary>6. Lái tay và bộ điều khiển tự viết</summary>
-      <div class="sec">
-        <p class="muted" style="margin-top:0">Chọn “Lái tay” ở mục 1: dùng phím mũi tên / W A S D hoặc nút bên dưới sân. Chọn “Tự viết (JavaScript)” để thử thuật toán của sinh viên.</p>
-        <textarea id="codeBox" spellcheck="false"></textarea>
-        <div class="toolbar"><button class="primary" id="btnCodeApply">Dùng đoạn mã này</button><button id="btnCodeSample">Mã mẫu</button></div>
-        <div class="err" id="codeErr"></div>
-      </div>
-    </details>
-
-    <details>
-      <summary>7. Ghi dữ liệu và mở rộng</summary>
-      <div class="sec">
-        <div class="toolbar"><button id="btnTraj">📋 Lấy quỹ đạo lượt này (CSV)</button></div>
-        <p class="muted">Các mô-đun dự trù cho dự án sau (cùng khung, thêm dần):</p>
-        <div class="chips">
-          <span class="chip">✅ Bộ não lái PPO</span><span class="chip">✅ Kịch bản 5 cấp</span><span class="chip">✅ Lái tay / tự viết</span>
-          <span class="chip soon">Teach & Repeat (ảnh mốc)</span><span class="chip soon">Camera ảo cho YOLO thật</span>
-          <span class="chip soon">Lệnh giọng nói → nhiệm vụ</span><span class="chip soon">Bản đồ phòng lab thật</span>
-          <span class="chip soon">Chó robot 12 servo</span><span class="chip soon">Drone</span>
+      </details>
+      <details>
+        <summary>4. Sửa bản đồ</summary>
+        <div class="sec">
+          <p class="muted" style="margin-top:0">Chọn công cụ rồi chạm vào sân.</p>
+          <div class="toolbar" id="tools">
+            <button data-tool="none" class="on">Không sửa</button><button data-tool="cyl">+ Trụ tròn</button><button data-tool="box">+ Hộp</button>
+            <button data-tool="wall">+ Tường 2 m</button><button data-tool="mover">+ Người đi lại</button><button data-tool="goal">Đặt đích</button>
+            <button data-tool="start">Đặt xe</button><button data-tool="rotate">Xoay xe 45°</button><button data-tool="del">Xóa vật</button>
+          </div>
+          <div class="toolbar">
+            <button id="btnClear">Xóa hết vật cản</button><button id="btnSaveMap">💾 Lưu</button><button id="btnLoadMap">📥 Nạp</button>
+            <button id="btnExportMap">📋 Xuất JSON</button><button id="btnImportMap">Dán JSON</button>
+          </div>
+          <p class="muted" id="mapInfo"></p>
         </div>
-        <p class="muted">Lập trình viên mở Console và dùng <code>RobotLab</code>: <code>RobotLab.setController(fn)</code>, <code>RobotLab.loadScenario(obj)</code>, <code>RobotLab.loadBrain(json)</code>, <code>RobotLab.registerRobot(profile)</code>.</p>
-      </div>
-    </details>
+      </details>
+      <details>
+        <summary>5. Thông số robot</summary>
+        <div class="sec">
+          <p class="muted" style="margin-top:0">Bộ não học với thông số mặc định; đổi nhiều sẽ lái kém hơn – cũng là cách kiểm tra độ bền.</p>
+          <div class="grid2" id="cfgForm"></div>
+          <div class="toolbar"><button class="primary" id="btnCfgApply">Áp dụng</button><button id="btnCfgDefault">Về mặc định</button><button id="btnCfgExport">📋 Xuất hồ sơ robot</button></div>
+        </div>
+      </details>
+      <details>
+        <summary>6. Lái tay và bộ điều khiển tự viết</summary>
+        <div class="sec">
+          <p class="muted" style="margin-top:0">Chọn “Lái tay” ở ô Bộ não: phím mũi tên / W A S D hoặc nút dưới sân. Chọn “Tự viết” để thử thuật toán của sinh viên.</p>
+          <textarea id="codeBox" spellcheck="false"></textarea>
+          <div class="toolbar"><button class="primary" id="btnCodeApply">Dùng đoạn mã này</button><button id="btnCodeSample">Mã mẫu</button></div>
+          <div class="err" id="codeErr"></div>
+        </div>
+      </details>
+      <details>
+        <summary>7. Ghi dữ liệu và mở rộng</summary>
+        <div class="sec">
+          <div class="toolbar"><button id="btnTraj">📋 Lấy quỹ đạo (CSV)</button></div>
+          <div class="chips">
+            <span class="chip">✅ Bộ não PPO</span><span class="chip">✅ Kịch bản 5 cấp</span><span class="chip">✅ Nhà ảo + mốc ArUco</span><span class="chip">✅ Lệnh giọng nói</span>
+            <span class="chip soon">Encoder + IMU + bản đồ đồ vật</span><span class="chip soon">Lidar + SLAM</span><span class="chip soon">Drone</span>
+          </div>
+          <p class="muted">Console: <code>RobotLab.setController(fn)</code>, <code>RobotLab.loadScenario(obj)</code>, <code>RobotLab.loadBrain(json)</code>, <code>RobotLab.command("đi tới tủ lạnh")</code>.</p>
+        </div>
+      </details>
+    </div>
   </aside>
 </main>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="box">
-    <h2 id="modalTitle" style="font-size:18px;margin:0 0 8px">Dữ liệu</h2>
+    <h2 id="modalTitle">Dữ liệu</h2>
     <textarea id="modalText"></textarea>
     <div class="toolbar"><button class="primary" id="modalCopy">Sao chép</button><button id="modalOk">Đóng</button><span class="muted" id="modalMsg"></span></div>
   </div>
 </div>
 
-<footer>Phòng thí nghiệm robot ảo · NGUYỄN SỸ HIỆP – ICTU · Vật lý 2D gần đúng môi trường huấn luyện PyBullet; kết quả để so sánh và giảng dạy.</footer>
+<footer>Phòng thí nghiệm robot ảo · NGUYỄN SỸ HIỆP – Trường Đại học Công nghệ Thông tin và Truyền thông, Đại học Thái Nguyên · Vật lý 2D gần đúng môi trường huấn luyện PyBullet; dùng để so sánh và giảng dạy.</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="core.js"></script>
+<script src="house.js"></script>
+<script src="models.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

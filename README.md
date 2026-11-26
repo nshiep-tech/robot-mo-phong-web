@@ -17,12 +17,18 @@ kaggle-robot (huấn luyện PPO)  →  policy_pi.npz  →  tools/npz2json.py  �
 |---|---|
 | `web/index.html` | Giao diện (đầu trang ghi tên và trường; hiển thị tốt trên điện thoại) |
 | `web/core.js` | Lõi mô phỏng: động học vi sai, động cơ TT, siêu âm, YOLO giả lập, 5 cấp kịch bản, mạng MLP, chấm điểm. Chạy được cả trong Node. |
+| `web/house.js` | Nhà ảo 3 phòng, mốc ArUco, bộ điều phối lệnh (hiểu lệnh → nhận phòng → qua cửa → tìm đồ vật → bộ não lái) |
+| `web/models.js` | Mô hình 3D đồ đạc (sofa, tủ lạnh, giường…) và robot |
 | `web/app.js` | Vẽ 2D/3D, bảng số liệu, sửa bản đồ, cấu hình robot, lái tay, mã tự viết |
 | `web/brains/` | Các bộ não đã đổi sang JSON (định dạng `robot2wd-mlp-v1`) |
 | `tools/npz2json.py` | Đổi `policy_pi.npz` (Kaggle) thành JSON |
 | `test/benchmark.js` | Kiểm tra lõi bằng Node: `node test/benchmark.js` |
 
 ## Tính năng
+
+**Chế độ Nhà thông minh** (mặc định): ra lệnh bằng chữ hoặc giọng nói, ví dụ "đi tới tủ lạnh" hay "vào phòng ngủ". Robot đọc mốc ArUco để tự nhận phòng, tìm đường qua các cửa theo sơ đồ mốc, nhận đồ vật bằng YOLO, rồi để bộ não PPO lái tới nơi. Khi bị chắn, robot quay một vòng quét siêu âm để tìm lối vòng. Có công tắc chạm, và có thể bật thêm người đi lại. Kiểm tra bằng `node test/house_test.js`: thành công 58/60 nhiệm vụ.
+
+**Chế độ Sân huấn luyện 5 cấp:**
 
 1. Năm cấp kịch bản giống lúc huấn luyện, chọn bằng mã bản đồ (seed) nên lặp lại được.
 2. Bốn bộ não có sẵn. Có thể tải thêm `.npz` hoặc `.json`, lái tay (phím mũi tên, WASD, nút trên điện thoại), hoặc tự viết bộ điều khiển bằng JavaScript.
