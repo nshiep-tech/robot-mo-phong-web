@@ -129,6 +129,11 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
 .layers b{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--navy);color:#fff;font-size:12px}
 .layers div:last-child b{background:var(--red)}
 .hide{display:none!important}
+.memgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.memgrid div{display:flex;justify-content:space-between;gap:6px;background:var(--sky2);border:1px solid #E3EAF3;border-radius:9px;padding:6px 9px;font-size:13px}
+.memgrid div b{color:var(--navy)}
+.memgrid div.wrong{background:var(--red2);border-color:#F2B8BF}.memgrid div.wrong b{color:var(--red)}
+@media(max-width:420px){.memgrid{grid-template-columns:minmax(0,1fr)}}
 footer{color:var(--muted);font-size:12.5px;text-align:center;padding:14px 16px 24px}
 @media(max-width:600px){button{padding:8px 11px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.obsrow{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 48px}.step{font-size:11px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -200,9 +205,31 @@ footer{color:var(--muted);font-size:12.5px;text-align:center;padding:14px 16px 2
         <div class="err" id="hsErr"></div>
         <div class="toolbar" style="margin-top:8px">
           <button id="hsPlace" title="Chạm lên mặt bằng để đặt xe">📍 Đặt xe chỗ khác</button>
-          <label class="inline"><input type="checkbox" id="hsPeople"> Có người đi lại</label>
           <label class="inline"><input type="checkbox" id="hsBump" checked> Công tắc chạm</label>
         </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span>Kịch bản trong nhà</h2>
+        <p class="muted" style="margin:0 0 8px">Dời đồ đạc để thử xem robot có tự tìm ra chỗ mới không. Robot <b>không được báo</b> là đồ đã bị dời – nó chỉ biết khi tự nhìn thấy.</p>
+        <div class="toolbar" style="margin-top:0">
+          <button id="hsShuffle">🔀 Xáo trộn đồ đạc</button>
+          <button id="hsMove">✋ Dời một món</button>
+          <button id="hsRestore">↩ Đồ về chỗ cũ</button>
+        </div>
+        <p class="muted" style="margin:12px 0 4px">Đối tượng di chuyển</p>
+        <div class="toolbar" style="margin-top:0">
+          <label class="inline"><input type="checkbox" id="mvNguoiKhach"> 🚶 Người ở phòng khách</label>
+          <label class="inline"><input type="checkbox" id="mvNguoiBep"> 🧑‍🍳 Người ở bếp</label>
+          <label class="inline"><input type="checkbox" id="mvMeo"> 🐈 Mèo</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span>Trí nhớ của robot</h2>
+        <p class="muted" style="margin:0 0 8px">Robot nhớ mỗi đồ vật ở phòng nào. Khi tìm không thấy ở chỗ cũ, nó đi tìm phòng khác rồi ghi nhớ chỗ mới. Đỏ = robot đang nhớ sai (đồ đã bị dời mà robot chưa thấy).</p>
+        <div id="hsMem" class="memgrid"></div>
+        <div class="toolbar"><button id="hsForget">🧠 Xóa trí nhớ (về mặc định)</button></div>
       </div>
 
       <div class="card">

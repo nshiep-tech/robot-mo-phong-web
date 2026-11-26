@@ -314,6 +314,15 @@
       const target = this.kinematics(action).map((t, i) => t * this.motorGain[i]);
       const dtc = 1 / c.control_hz, B = this.bounds, m = 0.3;
       for (const o of this.sc.obstacles) if (o.kind === "mover") {     // người đi lại
+        if (o.path) {                                                   // đi theo lộ trình, nhường xe khi xe ở ngay trước mặt
+          const p = o.path[o.pi || 0], dx = p[0] - o.x, dy = p[1] - o.y, d = Math.hypot(dx, dy), sp = o.speed || 0.25;
+          const rx = this.x - o.x, ry = this.y - o.y;
+          if (Math.hypot(rx, ry) < o.r + 0.32 && rx * dx + ry * dy > 0) { o.moving = false; continue; }
+          o.moving = true; o.walk = (o.walk || 0) + sp * dtc;
+          if (d < sp * dtc) { o.x = p[0]; o.y = p[1]; o.pi = ((o.pi || 0) + 1) % o.path.length; }
+          else { o.vx = dx / d * sp; o.vy = dy / d * sp; o.x += o.vx * dtc; o.y += o.vy * dtc; }
+          continue;
+        }
         o.x += o.vx * dtc; o.y += o.vy * dtc;
         const Z = o.zone ? { x0: o.zone[0], x1: o.zone[1], y0: o.zone[2], y1: o.zone[3] } : B, mm = o.zone ? 0 : m;
         if ((o.x < Z.x0 + mm && o.vx < 0) || (o.x > Z.x1 - mm && o.vx > 0)) o.vx = -o.vx;   // đi trong vùng của mình

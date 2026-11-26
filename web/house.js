@@ -81,14 +81,64 @@
     { model: "rug", x: 3.05, y: -0.95, w: 1.6, d: 0.5, color: "#e8d6d8" },
   ];
 
-  function buildScenario(start = { x: -1.4, y: -1.0, yaw: 0 }) {
+  // Đồ có thể dời chỗ (đồ gắn cố định như bồn rửa, bếp, sofa, giường, bộ bàn ăn thì giữ nguyên)
+  const MOVABLE = ["tivi", "ghe_banh", "cay_khach", "cay_ngu", "ban_tra", "tu_lanh", "ban_lam_viec", "ke_sach", "tu_quan_ao"];
+  // Đối tượng di chuyển: đi theo lộ trình vòng, nhường xe
+  const MOVERS = {
+    nguoi_khach: { kind: "mover", model: "person", label: "Người", r: 0.2, speed: 0.32, path: [[-0.9, -2.3], [-0.9, 1.9], [-1.6, 2.05], [-1.6, -1.5]], look: { shirt: 0xD62839, pants: 0x13315C, hair: 0x2B1D14 } },
+    nguoi_bep: { kind: "mover", model: "person", label: "Người", r: 0.2, speed: 0.24, path: [[1.25, 2.05], [3.05, 2.05]], look: { shirt: 0xF4F6F9, pants: 0x0B2545, hair: 0x4A3426, apron: 0x1F4E8C } },
+    meo: { kind: "mover", model: "cat", label: "Mèo", r: 0.13, speed: 0.4, path: [[1.0, -1.25], [1.95, -0.95], [1.95, -2.2], [1.3, -2.25]] },
+  };
+  const segDist = (px, py, [ax, ay], [bx, by]) => {
+    const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy || 1)));
+    return Math.hypot(px - ax - t * vx, py - ay - t * vy);
+  };
+  const ext = o => o.kind === "cyl" ? [o.r, o.r] : [o.hx, o.hy];
+  const gap = (a, b) => { const [ax, ay] = ext(a), [bx, by] = ext(b); return Math.max(Math.abs(a.x - b.x) - ax - bx, Math.abs(a.y - b.y) - ay - by); };
+
+  /* Xáo trộn đồ: trả về {id: {x, y, hx, hy, face}} – không chắn cửa, lối đi của người, giữa phòng, chỗ xe đứng */
+  function shuffleLayout(seed, start = { x: -1.4, y: -1.0 }) {
+    const R = C.rng(seed * 9973 + 1), layout = {};
+    const placed = WALLS.map(w => ({ kind: "box", ...w })).concat(FURNITURE.filter(f => !MOVABLE.includes(f.id)));
+    const keep = [start].concat(Object.values(ROOMS).map(r => r.center), DOORS.flatMap(d => Object.values(d.side)));
+    const paths = Object.values(MOVERS).map(m => m.path);
+    for (const id of MOVABLE) {
+      const f = FURNITURE.find(x => x.id === id);
+      let ok = null;
+      for (let k = 0; k < 600 && !ok; k++) {
+        const rk = Object.keys(ROOMS)[R.int(0, 2)], [a, b, c, d] = ROOMS[rk].rect;
+        const face = ["px", "nx", "py", "ny"][R.int(0, 3)];
+        const along = o => o === "px" || o === "nx";
+        let hx = f.hx, hy = f.hy;
+        if (f.kind !== "cyl" && along(face) !== along(f.face)) [hx, hy] = [hy, hx];
+        const [ex, ey] = f.kind === "cyl" ? [f.r, f.r] : [hx, hy];
+        const x = R.uniform(a + ex + 0.08, b - ex - 0.08), y = R.uniform(c + ey + 0.08, d - ey - 0.08);
+        const o = f.kind === "cyl" ? { kind: "cyl", x, y, r: f.r } : { kind: "box", x, y, hx, hy };
+        if (placed.some(p => gap(o, p) < (p.hx === T || p.hy === T ? 0.03 : 0.5))) continue;   // sát tường được, cách đồ khác ≥ 0,5 m để còn lối đi
+        if (keep.some(p => gap(o, { kind: "cyl", x: p.x, y: p.y, r: 0 }) < 0.55)) continue;
+        if (paths.some(pt => pt.some((q, i) => segDist(x, y, q, pt[(i + 1) % pt.length]) < Math.max(ex, ey) + 0.3))) continue;
+        ok = { x, y, hx, hy, face, room: rk }; placed.push({ ...o, ...ok });
+      }
+      if (ok) layout[id] = ok;
+    }
+    return layout;
+  }
+
+  function buildScenario(start = { x: -1.4, y: -1.0, yaw: 0 }, layout = null, movers = []) {
+    const furn = FURNITURE.map(f => {
+      const o = JSON.parse(JSON.stringify(f));
+      if (layout && layout[o.id]) { Object.assign(o, layout[o.id]); delete o.approach; o.moved = true; }
+      return o;
+    });
+    const mv = movers.filter(k => MOVERS[k]).map(k => Object.assign(JSON.parse(JSON.stringify(MOVERS[k])), { id: k }))
+      .map(m => Object.assign(m, { x: m.path[0][0], y: m.path[0][1], vx: 0, vy: 0, pi: 1 }));
     return {
       house: true, level: 2, seed: 1, bounds: BOUNDS,
-      obstacles: WALLS.map(w => Object.assign({ kind: "wall", inner: true }, w))
-        .concat(FURNITURE.map(f => JSON.parse(JSON.stringify(f)))),
+      obstacles: WALLS.map(w => Object.assign({ kind: "wall", inner: true }, w)).concat(furn, mv),
       start: Object.assign({}, start), goal: Object.assign({}, start),
     };
   }
+  const defaultMemory = () => Object.fromEntries(FURNITURE.filter(f => f.label && f.model !== "chair").map(f => [f.id, f.room]));
 
   // -------------------------------------------------------- hiểu lệnh
   const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/\s+/g, " ").trim();
@@ -168,7 +218,8 @@
   const MARKER_RANGE = 6.0, YOLO_RANGE = 5.0, SPIN = 0.55;
 
   class Navigator {
-    constructor() { this.reset(); }
+    constructor() { this.mem = defaultMemory(); this.reset(); }
+    forget() { this.mem = defaultMemory(); }
     reset() {
       this.phase = "rong"; this.room = null; this.target = null; this.legs = []; this.leg = 0;
       this.goal = null; this.log = []; this.spun = 0; this.retries = 0; this.stuck = 0; this.best = Infinity;
@@ -178,9 +229,12 @@
     command(text, sim) {
       const q = parseCommand(text, this.room);
       if (!q) { this.say(`Chưa hiểu lệnh “${text}”. Thử: “đi tới tủ lạnh”, “vào phòng ngủ”.`, "bad"); return false; }
-      this.target = q.type === "object" ? FURNITURE.find(f => f.id === q.id) : { id: q.id, room: q.id, label: ROOMS[q.id].name, approach: ROOMS[q.id].center, isRoom: true };
-      this.legs = []; this.leg = 0; this.retries = 0; this.seen = [];
-      this.say(`Hiểu lệnh: tới <b>${this.target.label}</b>` + (q.type === "object" ? ` (ở ${ROOMS[this.target.room].name.toLowerCase()})` : ""), "ok");
+      if (q.type === "object") {
+        const o = sim.sc.obstacles.find(x => x.id === q.id) || FURNITURE.find(f => f.id === q.id);
+        this.target = Object.assign({}, o, { obj: o, room: this.mem[q.id] || o.room });
+      } else this.target = { id: q.id, room: q.id, label: ROOMS[q.id].name, approach: ROOMS[q.id].center, isRoom: true };
+      this.legs = []; this.leg = 0; this.retries = 0; this.seen = []; this.searched = new Set();
+      this.say(`Hiểu lệnh: tới <b>${this.target.label}</b>` + (q.type === "object" ? ` (theo trí nhớ: ở ${ROOMS[this.target.room].name.toLowerCase()})` : ""), "ok");
       if (this.target.custom) this.say("Tủ quần áo không có trong bộ YOLO chuẩn (COCO) – xe thật cần huấn luyện thêm lớp này.", "warn");
       this.set(this.room ? "plan" : "dinh_vi", sim);
       return true;
@@ -203,6 +257,7 @@
     act(sim, brainAct) {
       if (sim.done && sim.result === "vacham" && this.phase !== "va_cham") { this.say(`Va chạm với ${sim.hitObstacle?.label || "tường"}.`, "bad"); this.set("va_cham"); }
       const d = this.goal ? Math.hypot(this.goal.x - sim.x, this.goal.y - sim.y) : Infinity;
+      if (this.busy && sim.steps % 4 === 0) { const r = this.observeObjects(sim); if (r) return r; }
       if (sim.bumped && this.phase !== "lui_ra") {          // công tắc chạm kích hoạt
         this.bumps = (this.bumps || 0) + 1;
         this.say(`Chạm nhẹ ${sim.hitObstacle?.label || "tường"} (lần ${this.bumps}) → dừng, lùi 10 cm, quay tránh.`, "warn");
@@ -246,12 +301,8 @@
           }
           return drive();
         case "tim_vat": {
-          const t = this.target;
-          if (sim.sees(t.x, t.y, YOLO_RANGE)) {
-            this.mark(t.x, t.y);
-            this.say(`YOLO nhận ra <b>${t.label}</b>${t.yolo ? ` (lớp “${t.yolo}”)` : ""}, cách ${Math.max(0, Math.hypot(t.x - sim.x, t.y - sim.y) - 0.3).toFixed(1).replace(".", ",")} m.`, "ok");
-            this.setGoal(sim, t.approach); this.set("toi_vat"); return [0, 0];
-          }
+          const t = this.target.obj || this.target;
+          if (sim.sees(t.x, t.y, YOLO_RANGE)) { this.found(sim, t); return [0, 0]; }
           return this.spinOrRetry(sim, spin);
         }
         case "toi_vat":
@@ -261,7 +312,8 @@
           }
           return drive();
         case "quay_mat": {
-          const a = C.wrap(Math.atan2(this.target.y - sim.y, this.target.x - sim.x) - sim.yaw);
+          const T = this.target.obj || this.target;
+          const a = C.wrap(Math.atan2(T.y - sim.y, T.x - sim.x) - sim.yaw);
           if (Math.abs(a) < 0.15 || ++this.timer > 60) { this.say(`Đã tới <b>${this.target.label}</b>. Nhiệm vụ hoàn thành.`, "ok"); this.set("xong"); return [0, 0]; }
           return [0, Math.sign(a) * Math.min(0.6, Math.abs(a))];
         }
@@ -294,12 +346,59 @@
     }
     spinOrRetry(sim, spin) {
       if (this.spun <= 2.1 * Math.PI) return spin();
-      if (this.retries++ < 2) {
+      if (this.retries++ < (this.phase === "tim_vat" ? 1 : 2)) {
         const c = ROOMS[this.room].center;
         this.say("Quay một vòng chưa thấy (bị che). Ra giữa phòng rồi tìm lại.", "warn");
         this.push(); this.setGoal(sim, c); this.set("ve_giua"); return [0, 0];
       }
+      if (this.phase === "tim_vat" && !this.target.isRoom) {          // đồ có thể đã bị dời: đi tìm phòng khác
+        this.searched.add(this.room);
+        const left = Object.keys(ROOMS).filter(r => !this.searched.has(r))
+          .sort((a, b) => (planRooms(this.room, a) || []).length - (planRooms(this.room, b) || []).length);
+        if (left.length) {
+          this.say(`Không thấy <b>${this.target.label}</b> ở ${ROOMS[this.room].name.toLowerCase()} – có thể đã bị dời chỗ. Đi tìm ở <b>${ROOMS[left[0]].name}</b>.`, "warn");
+          this.target.room = left[0]; this.retries = 0; this.plan(sim); return [0, 0];
+        }
+        this.say(`Đã tìm khắp ${Object.keys(ROOMS).length} phòng vẫn không thấy ${this.target.label}. Dừng và báo người dùng.`, "bad"); this.set("that_bai"); return [0, 0];
+      }
       this.say("Đã tìm 3 lần vẫn không thấy. Dừng và báo người dùng.", "bad"); this.set("that_bai"); return [0, 0];
+    }
+    /* Thấy đồ vật cần tới: ghi nhớ phòng, tính điểm đứng trước đồ vật */
+    found(sim, t) {
+      this.mark(t.x, t.y);
+      this.say(`YOLO nhận ra <b>${t.label}</b>${t.yolo ? ` (lớp “${t.yolo}”)` : ""}, cách ${Math.max(0, Math.hypot(t.x - sim.x, t.y - sim.y) - 0.3).toFixed(1).replace(".", ",")} m.`, "ok");
+      this.remember(t);
+      this.setGoal(sim, t.approach || this.approachPoint(sim, t)); this.set("toi_vat");
+    }
+    remember(o) {
+      const r = roomAt(o.x, o.y); if (!r || !o.id) return;
+      if (this.mem[o.id] !== r) { this.say(`Ghi nhớ: <b>${o.label}</b> giờ ở <b>${ROOMS[r].name}</b> (trước nhớ ở ${ROOMS[this.mem[o.id]]?.name.toLowerCase() || "?"}).`, "ok"); this.mem[o.id] = r; }
+    }
+    /* Vừa đi vừa nhìn: cập nhật trí nhớ; nếu thấy đúng đồ vật cần tìm ở chỗ khác thì đổi đường */
+    observeObjects(sim) {
+      for (const o of sim.sc.obstacles) {
+        if (!o.id || !o.label || o.model === "chair" || o.kind === "mover" || o.kind === "wall") continue;
+        if (!sim.sees(o.x, o.y, YOLO_RANGE)) continue;
+        this.remember(o);
+        const t = this.target;
+        if (t && !t.isRoom && o.id === t.id && ["dinh_vi", "tim_moc", "toi_moc"].includes(this.phase) && this.room) {
+          const r = roomAt(o.x, o.y);
+          if (r === this.room) { this.say(`Thấy ngay <b>${o.label}</b> trong phòng này, đi thẳng tới.`, "ok"); this.found(sim, o); return [0, 0]; }
+          if (r !== t.room) { t.room = r; this.say(`Thấy <b>${o.label}</b> qua cửa, ở ${ROOMS[r].name.toLowerCase()} – đổi đường.`, "ok"); this.plan(sim); return [0, 0]; }
+        }
+      }
+      return null;
+    }
+    /* Điểm robot đứng trước đồ vật: phía gần robot, trống, cùng phòng với đồ vật */
+    approachPoint(sim, o) {
+      const room = roomAt(o.x, o.y), base = Math.atan2(sim.y - o.y, sim.x - o.x);
+      const clear = p => sim.allObstacles().every(q => q === o || q.kind === "mover" || gap({ kind: "cyl", x: p.x, y: p.y, r: 0 }, q) > 0.2);
+      for (const off of [0, 0.35, -0.35, 0.7, -0.7, 1.05, -1.05, 1.4, -1.4, 1.8, -1.8, 2.3, -2.3, 3.1]) {
+        const a = base + off, ux = Math.cos(a), uy = Math.sin(a);
+        const e = o.kind === "cyl" ? o.r : Math.abs(ux) * o.hx + Math.abs(uy) * o.hy, p = { x: o.x + ux * (e + 0.33), y: o.y + uy * (e + 0.33) };
+        if (roomAt(p.x, p.y) === room && clear(p)) return p;
+      }
+      return { x: o.x + Math.cos(base) * 0.6, y: o.y + Math.sin(base) * 0.6 };
     }
     /* Ngăn xếp pha: hành vi phụ (lùi tránh, gỡ kẹt, ra giữa phòng) xong thì quay lại việc đang làm */
     push() { (this.stack = this.stack || []).push({ phase: this.phase, goal: this.goal && { ...this.goal } }); }
@@ -313,5 +412,5 @@
     get busy() { return !["rong", "xong", "that_bai", "va_cham"].includes(this.phase); }
   }
 
-  return { BOUNDS, ROOMS, WALLS, DOORS, ROOM_MARKERS, FURNITURE, DECOR, PHASE, buildScenario, parseCommand, describe, planRooms, roomAt, norm, Navigator };
+  return { BOUNDS, ROOMS, WALLS, DOORS, ROOM_MARKERS, FURNITURE, DECOR, PHASE, MOVABLE, MOVERS, buildScenario, shuffleLayout, defaultMemory, parseCommand, describe, planRooms, roomAt, norm, Navigator };
 });

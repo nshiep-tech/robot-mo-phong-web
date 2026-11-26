@@ -262,37 +262,120 @@
     return g;
   }
 
-  // ---------------------------------------------------------- người đi lại
-  function person() {
-    const g = new THREE.Group();
-    g.add(cyl(0.07, 0.08, 0.8, M(NAVY), 0, 0.4, 0, 12));
-    g.add(cyl(0.13, 0.11, 0.55, M(RED), 0, 1.07, 0, 14));
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), M(0xE8C4A0)); head.position.y = 1.47; head.castShadow = true; g.add(head);
+  // ---------------------------------------------------------- người (có khớp, bước đi)
+  function limb(len, r0, r1, mat) {                    // chi treo từ khớp ở gốc, dài xuống dưới
+    const g = new THREE.Group(), m = cyl(r1, r0, len, mat, 0, -len / 2, 0, 12); g.add(m);
+    const j = new THREE.Mesh(new THREE.SphereGeometry(r0, 12, 8), mat); j.castShadow = true; g.add(j); return g;
+  }
+  function person(look = {}) {
+    const skin = M(look.skin || 0xE7C3A0, { roughness: 0.7 }), shirt = M(look.shirt || 0xD62839, { roughness: 0.9 });
+    const pants = M(look.pants || 0x13315C, { roughness: 0.9 }), shoe = M(0x22262E, { roughness: 0.6 }), hair = M(look.hair || 0x2B1D14, { roughness: 0.9 });
+    const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+    const legs = [], arms = [];
+    for (const s of [-1, 1]) {                         // chân: đùi + cẳng + giày, gập gối khi bước
+      const hip = new THREE.Group(); hip.position.set(0, 0.86, s * 0.085);
+      const thigh = limb(0.42, 0.07, 0.058, pants); hip.add(thigh);
+      const knee = new THREE.Group(); knee.position.y = -0.42; thigh.add(knee);
+      const shin = limb(0.4, 0.056, 0.045, pants); knee.add(shin);
+      const foot = box(0.22, 0.06, 0.09, shoe, 0.05, -0.42, 0); shin.add(foot);
+      body.add(hip); legs.push({ hip: thigh, knee });
+    }
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.13, 0.56, 16), shirt); torso.position.y = 1.15; torso.scale.z = 1.35; torso.castShadow = true; body.add(torso);
+    const pelvis = cyl(0.135, 0.13, 0.12, pants, 0, 0.9, 0, 16); pelvis.scale.z = 1.3; body.add(pelvis);
+    if (look.apron) { const ap = box(0.03, 0.5, 0.26, M(look.apron), 0.15, 1.0, 0); body.add(ap); }
+    const sh = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), shirt); sh.position.y = 1.42; sh.scale.set(1, 0.45, 1.35); body.add(sh);
+    for (const s of [-1, 1]) {                         // tay: cánh tay + cẳng tay + bàn tay
+      const sh2 = new THREE.Group(); sh2.position.set(0, 1.4, s * 0.21);
+      const up = limb(0.3, 0.05, 0.045, shirt); sh2.add(up);
+      const el = new THREE.Group(); el.position.y = -0.3; up.add(el);
+      const fo = limb(0.27, 0.042, 0.035, skin); el.add(fo);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), skin); hand.position.y = -0.29; fo.add(hand);
+      body.add(sh2); arms.push({ sh: up, el });
+    }
+    body.add(cyl(0.045, 0.05, 0.09, skin, 0, 1.5, 0, 10));
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 20, 16), skin); head.position.y = 1.64; head.scale.set(1, 1.12, 0.95); head.castShadow = true; body.add(head);
+    const hr = new THREE.Mesh(new THREE.SphereGeometry(0.117, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hair); hr.position.set(-0.012, 1.655, 0); hr.scale.set(1, 1.12, 0.98); body.add(hr);
+    for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.013, 8, 6), M(0x1B1F27)); e.position.set(0.095, 1.66, s * 0.04); body.add(e); }
+    /* cập nhật dáng đi: phase = quãng đường đã đi (m), moving = đang bước hay đứng */
+    g.userData.pose = (phase, moving) => {
+      const a = moving ? Math.sin(phase * 7.5) : 0, k = moving ? Math.abs(Math.cos(phase * 7.5)) : 0;
+      legs[0].hip.rotation.z = 0.45 * a; legs[1].hip.rotation.z = -0.45 * a;
+      legs[0].knee.rotation.z = -0.5 * Math.max(0, -a) - 0.05; legs[1].knee.rotation.z = -0.5 * Math.max(0, a) - 0.05;
+      arms[0].sh.rotation.z = -0.38 * a; arms[1].sh.rotation.z = 0.38 * a;
+      arms[0].el.rotation.z = arms[1].el.rotation.z = 0.25;
+      body.position.y = moving ? 0.018 * k : 0;
+    };
+    g.userData.pose(0, false);
     return g;
   }
 
-  // ---------------------------------------------------------- robot 2 bánh
+  // ---------------------------------------------------------- mèo
+  function cat() {
+    const fur = M(0xE39B4E, { roughness: 0.95 }), white = M(0xFBF4EA, { roughness: 0.95 }), dark = M(0x1B1F27);
+    const g = new THREE.Group(), legs = [];
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.1, 18, 12), fur); body.scale.set(1.9, 0.95, 0.95); body.position.y = 0.17; body.castShadow = true; g.add(body);
+    const chest = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 10), white); chest.position.set(0.13, 0.15, 0); g.add(chest);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 12), fur); head.position.set(0.23, 0.25, 0); head.castShadow = true; g.add(head);
+    const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), white); muzzle.position.set(0.29, 0.23, 0); g.add(muzzle);
+    for (const s of [-1, 1]) {
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.06, 4), fur); ear.position.set(0.21, 0.32, s * 0.04); g.add(ear);
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 6), dark); eye.position.set(0.295, 0.265, s * 0.028); g.add(eye);
+    }
+    for (const [x, z] of [[0.11, 0.05], [0.11, -0.05], [-0.11, 0.05], [-0.11, -0.05]]) {
+      const hip = new THREE.Group(); hip.position.set(x, 0.14, z); hip.add(cyl(0.018, 0.016, 0.13, fur, 0, -0.065, 0, 8));
+      const paw = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 6), white); paw.position.y = -0.13; hip.add(paw);
+      g.add(hip); legs.push(hip);
+    }
+    const tail = new THREE.Group(); tail.position.set(-0.18, 0.2, 0); g.add(tail);
+    const tc = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.016, 8, 16, Math.PI * 0.8), fur); tc.rotation.z = Math.PI * 0.35; tc.position.set(-0.06, 0.07, 0); tail.add(tc);
+    g.userData.pose = (phase, moving) => {
+      const a = moving ? Math.sin(phase * 16) * 0.5 : 0;
+      legs[0].rotation.z = a; legs[3].rotation.z = a; legs[1].rotation.z = -a; legs[2].rotation.z = -a;
+      tail.rotation.x = Math.sin(performance.now() / 300) * 0.3;
+    };
+    return g;
+  }
+
+  // ---------------------------------------------------------- xe 2 bánh (bộ kit 2WD: 2 tầng mica, 2 motor TT, bánh tự lựa)
+  function plate(w, d, r, mat) {
+    const sh = new THREE.Shape(), x0 = -w / 2, z0 = -d / 2;
+    sh.moveTo(x0 + r, z0); sh.lineTo(x0 + w - r, z0); sh.quadraticCurveTo(x0 + w, z0, x0 + w, z0 + r);
+    sh.lineTo(x0 + w, z0 + d - r); sh.quadraticCurveTo(x0 + w, z0 + d, x0 + w - r, z0 + d);
+    sh.lineTo(x0 + r, z0 + d); sh.quadraticCurveTo(x0, z0 + d, x0, z0 + d - r); sh.lineTo(x0, z0 + r); sh.quadraticCurveTo(x0, z0, x0 + r, z0);
+    const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.004, bevelEnabled: false }); geo.rotateX(Math.PI / 2);
+    const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; return m;
+  }
   function robot() {
     const g = new THREE.Group();
-    const body = box(0.2, 0.035, 0.15, M(NAVY, { roughness: 0.5 }), 0, 0.045, 0); g.add(body); g.userData.body = body;
-    g.add(box(0.19, 0.004, 0.14, M(0xFFFFFF, { transparent: true, opacity: 0.55, roughness: 0.1 }), 0, 0.105, 0));
-    for (const [x, z] of [[0.08, 0.06], [0.08, -0.06], [-0.08, 0.06], [-0.08, -0.06]]) g.add(cyl(0.004, 0.004, 0.04, M(METAL, { metalness: 0.8 }), x, 0.083, z, 6));
-    g.add(box(0.085, 0.012, 0.056, M(0x1E7B4F), -0.03, 0.07, 0));             // Raspberry Pi
-    g.add(box(0.03, 0.012, 0.03, M(METAL, { metalness: 0.6 }), -0.055, 0.082, 0.012));
-    g.add(box(0.06, 0.02, 0.1, M(0x2A3342), -0.06, 0.12, 0));                 // pin
-    g.add(box(0.012, 0.03, 0.15, M(RED, { roughness: 0.6 }), 0.106, 0.045, 0));  // cản trước đỏ (công tắc chạm)
-    const hc = box(0.012, 0.02, 0.045, M(0x1F4E8C), 0.1, 0.08, 0); g.add(hc);    // HC-SR04
-    for (const s of [-1, 1]) { const e = cyl(0.008, 0.008, 0.012, M(METAL, { metalness: 0.8, roughness: 0.2 }), 0.11, 0.08, s * 0.012, 12); e.rotation.z = Math.PI / 2; g.add(e); }
-    g.add(box(0.02, 0.022, 0.025, M(0x111111), 0.085, 0.125, 0));               // camera
-    const lens = cyl(0.006, 0.006, 0.006, M(0x3A6EA5, { metalness: 0.5, roughness: 0.1 }), 0.097, 0.125, 0, 12); lens.rotation.z = Math.PI / 2; g.add(lens);
+    const acrylic = M(0x8FB4E3, { transparent: true, opacity: 0.7, roughness: 0.15, metalness: 0.05 });
+    const p1 = plate(0.21, 0.13, 0.03, acrylic); p1.position.y = 0.052; g.add(p1);
+    const p2 = plate(0.17, 0.12, 0.03, M(0x0B2545, { roughness: 0.4 })); p2.position.y = 0.092; g.add(p2); g.userData.body = p2;
+    for (const [x, z] of [[0.065, 0.045], [0.065, -0.045], [-0.065, 0.045], [-0.065, -0.045]]) g.add(cyl(0.0035, 0.0035, 0.04, M(0xC9A227, { metalness: 0.9, roughness: 0.3 }), x, 0.07, z, 6));
     for (const s of [1, -1]) {
-      const tire = cyl(0.0325, 0.0325, 0.026, M(0x1B1F27, { roughness: 0.9 }), 0, 0.0325, s * 0.087, 24); tire.rotation.x = Math.PI / 2; g.add(tire);
-      const hub = cyl(0.018, 0.018, 0.028, M(0xF1C40F), 0, 0.0325, s * 0.087, 12); hub.rotation.x = Math.PI / 2; g.add(hub);
-      g.add(box(0.06, 0.022, 0.02, M(0xF1C40F), 0.0, 0.04, s * 0.06));          // motor TT vàng
+      g.add(box(0.07, 0.022, 0.019, M(0xF2C230, { roughness: 0.5 }), 0.0, 0.034, s * 0.046));        // motor TT vàng
+      const shaft = cyl(0.003, 0.003, 0.03, M(0xFFFFFF), 0, 0.0325, s * 0.065, 6); shaft.rotation.x = Math.PI / 2; g.add(shaft);
+      const tire = new THREE.Mesh(new THREE.TorusGeometry(0.0255, 0.0085, 10, 28), M(0x1B1F27, { roughness: 0.95 }));
+      tire.position.set(0, 0.0325, s * 0.078); tire.castShadow = true; g.add(tire);
+      const rim = cyl(0.022, 0.022, 0.024, M(0xF2C230, { roughness: 0.45 }), 0, 0.0325, s * 0.078, 18); rim.rotation.x = Math.PI / 2; g.add(rim);
+      const hub = cyl(0.007, 0.007, 0.026, M(0xFFFFFF), 0, 0.0325, s * 0.078, 10); hub.rotation.x = Math.PI / 2; g.add(hub);
     }
-    const caster = new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 8), M(METAL, { metalness: 0.8 })); caster.position.set(-0.08, 0.012, 0); g.add(caster);
+    g.add(cyl(0.006, 0.006, 0.03, M(METAL, { metalness: 0.8 }), -0.085, 0.035, 0, 8));                 // bánh tự lựa
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.011, 12, 8), M(METAL, { metalness: 0.9, roughness: 0.2 })); ball.position.set(-0.085, 0.011, 0); g.add(ball);
+    g.add(box(0.06, 0.02, 0.075, M(0x22262E), -0.03, 0.065, 0));                                          // hộp pin 18650
+    for (const s of [-1, 1]) { const c18 = cyl(0.009, 0.009, 0.065, M(s > 0 ? 0xD62839 : 0x1F4E8C), -0.03, 0.078, s * 0.017, 10); c18.rotation.z = Math.PI / 2; g.add(c18); }
+    g.add(box(0.085, 0.016, 0.056, M(0xD62839, { roughness: 0.5 }), -0.02, 0.102, 0));                  // Pi 4 trong vỏ đỏ
+    g.add(box(0.03, 0.004, 0.02, M(0xFFFFFF), -0.01, 0.111, 0.012));
+    g.add(box(0.012, 0.022, 0.046, M(0x1F4E8C), 0.1, 0.066, 0));                                         // HC-SR04
+    for (const s of [-1, 1]) { const e = cyl(0.008, 0.008, 0.014, M(METAL, { metalness: 0.85, roughness: 0.2 }), 0.112, 0.066, s * 0.012, 14); e.rotation.z = Math.PI / 2; g.add(e); }
+    g.add(box(0.012, 0.045, 0.012, M(0x22262E), 0.07, 0.12, 0));                                         // cột camera
+    g.add(box(0.016, 0.022, 0.026, M(0x111111), 0.075, 0.148, 0));
+    const lens = cyl(0.006, 0.006, 0.006, M(0x3A6EA5, { metalness: 0.5, roughness: 0.1 }), 0.085, 0.148, 0, 12); lens.rotation.z = Math.PI / 2; g.add(lens);
+    g.add(box(0.008, 0.012, 0.13, M(0xD62839), 0.108, 0.04, 0));                                          // cản trước (công tắc chạm)
+    // vòng sáng dưới xe để dễ nhìn thấy trong nhà
+    const halo = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.18, 40), new THREE.MeshBasicMaterial({ color: 0x1F4E8C, transparent: true, opacity: 0.55, side: THREE.DoubleSide }));
+    halo.rotation.x = -Math.PI / 2; halo.position.y = 0.003; g.add(halo);
     return g;
   }
 
-  root.RobotModels = { floorTex, marker, build, person, robot, M, box, cyl, COLORS: { NAVY, NAVY2, NAVY3, RED, WHITE, WOOD, WOOD_D } };
+  root.RobotModels = { floorTex, marker, build, person, cat, robot, M, box, cyl, COLORS: { NAVY, NAVY2, NAVY3, RED, WHITE, WOOD, WOOD_D } };
 })(typeof self !== "undefined" ? self : this);

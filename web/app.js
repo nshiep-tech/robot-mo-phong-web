@@ -28,6 +28,7 @@
     playing: false, speed: 2, acc: 0, view: "3d", tool: "none",
     stats: { ep: 0, dich: 0, vacham: 0, hetgio: 0 }, lastBench: null, robots: {},
     hStart: store.get("hStart", { x: -1.4, y: -1.0, yaw: 0 }), nav: new H.Navigator(), logShown: -1, cmdAt: 0,
+    layout: store.get("layout", null), movers: store.get("movers", ["nguoi_khach"]), moveSel: null,
   };
   let sim = new C.Sim(S.cfg), scenario = null;
 
@@ -46,10 +47,7 @@
   const isHouse = () => S.mode === "house";
 
   // ---------------------------------------------------------- vòng đời
-  function buildHouse() {
-    scenario = H.buildScenario(S.hStart);
-    if ($("hsPeople").checked) scenario.obstacles.push({ kind: "mover", model: "person", label: "Người", x: -1.0, y: -2.2, r: 0.18, vx: 0, vy: 0.22, zone: [-1.05, -0.95, -2.5, 2.3] });
-  }
+  function buildHouse() { scenario = H.buildScenario(S.hStart, S.layout, S.movers); }
   function newScenario(seed) {
     if (isHouse()) { buildHouse(); return restart(); }
     S.seed = seed ?? S.seed; $("inSeed").value = S.seed;
@@ -60,7 +58,7 @@
   function restart(keepNav) {
     if (isHouse()) {
       sim.load(scenario, { seed: 7, randomize: true, endOnGoal: false, maxSteps: 1e9, bump: $("hsBump").checked });
-      if (!keepNav) { S.nav.reset(); S.logShown = -1; }
+      S.nav.reset(); S.logShown = -1;                     // trí nhớ đồ vật (nav.mem) vẫn giữ
     } else sim.load(scenario, { seed: S.seed, randomize: $("chkNoise").checked });
     S.acc = 0; three.rebuild(); updateMapInfo(); render(); updatePanel(); updateHouse(true);
   }
@@ -208,10 +206,7 @@
     const nav = S.nav, tgt = house && nav.target && !nav.target.isRoom ? nav.target : null;
     for (const o of sim.allObstacles()) {
       if (o.kind === "wall") { g.fillStyle = COL.navy; g.fillRect(sx(o.x - o.hx), sy(o.y + o.hy), sl(2 * o.hx), sl(2 * o.hy)); continue; }
-      if (o.kind === "mover") {
-        g.fillStyle = COL.red; g.strokeStyle = "#fff"; g.lineWidth = 2; g.beginPath(); g.arc(sx(o.x), sy(o.y), sl(o.r), 0, 7); g.fill(); g.stroke();
-        g.fillStyle = "#F2D2B6"; g.beginPath(); g.arc(sx(o.x), sy(o.y), sl(o.r) * 0.45, 0, 7); g.fill(); continue;
-      }
+      if (o.kind === "mover") { drawMover2d(o); continue; }
       if (house && o.model) { drawFurniture2d(o, tgt && o.id === tgt.id); continue; }
       g.lineWidth = 2;
       if (o.kind === "box") { g.fillStyle = "#E8D2B0"; g.strokeStyle = COL.woodD; } else { g.fillStyle = "#C9D6EA"; g.strokeStyle = COL.navy3; }
@@ -256,6 +251,22 @@
     g.fillStyle = sim.result === "vacham" || sim.bumped ? COL.red : COL.navy; rrect(-L / 2, -Bw / 2, L, Bw, 3); g.fill();
     g.fillStyle = COL.red; g.fillRect(L / 2 - 3, -Bw / 2, 3, Bw);
     g.fillStyle = "#fff"; g.beginPath(); g.moveTo(L / 2 - 5, 0); g.lineTo(L / 2 - 12, -4); g.lineTo(L / 2 - 12, 4); g.fill();
+    g.restore();
+  }
+  function drawMover2d(o) {
+    const a = Math.atan2(o.vy || 0, o.vx || 1), x = sx(o.x), y = sy(o.y);
+    g.save(); g.translate(x, y); g.rotate(-a);
+    if (o.model === "cat") {
+      g.fillStyle = "#E39B4E"; g.beginPath(); g.ellipse(0, 0, sl(0.16), sl(0.075), 0, 0, 7); g.fill();
+      g.beginPath(); g.arc(sl(0.17), 0, sl(0.06), 0, 7); g.fill();
+      g.strokeStyle = "#E39B4E"; g.lineWidth = sl(0.025); g.beginPath(); g.moveTo(-sl(0.15), 0); g.quadraticCurveTo(-sl(0.28), sl(0.1), -sl(0.22), sl(0.16)); g.stroke();
+    } else {
+      const sh = "#" + (o.look?.shirt ?? 0xD62839).toString(16).padStart(6, "0"), sw = Math.sin((o.walk || 0) * 7.5) * sl(0.08) * (o.moving ? 1 : 0);
+      g.fillStyle = "#22262E"; g.beginPath(); g.ellipse(sw, -sl(0.08), sl(0.09), sl(0.045), 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(-sw, sl(0.08), sl(0.09), sl(0.045), 0, 0, 7); g.fill();
+      g.fillStyle = sh; g.strokeStyle = COL.navy2; g.lineWidth = 1.5; g.beginPath(); g.ellipse(0, 0, sl(0.13), sl(0.24), 0, 0, 7); g.fill(); g.stroke();
+      g.fillStyle = "#" + (o.look?.hair ?? 0x2B1D14).toString(16).padStart(6, "0"); g.beginPath(); g.arc(0, 0, sl(0.1), 0, 7); g.fill();
+      g.fillStyle = "#E7C3A0"; g.beginPath(); g.arc(sl(0.035), 0, sl(0.06), -1.2, 1.2); g.fill();
+    }
     g.restore();
   }
   function drawMarker2d(id, x, y) {
@@ -332,7 +343,7 @@
       for (const o of sim.allObstacles()) {
         let m;
         if (o.kind === "wall") { m = wallMesh(o, house ? 1.0 : 0.4); m.traverse(x => { x.userData.o = o; }); }
-        else if (o.kind === "mover") { m = RM.person(); m.position.copy(to3(o.x, o.y)); m.userData.o = o; m.userData.mover = true; }
+        else if (o.kind === "mover") { m = o.model === "cat" ? RM.cat() : RM.person(o.look); m.position.copy(to3(o.x, o.y)); m.userData.o = o; m.userData.mover = true; }
         else if (house && o.model) m = RM.build(o);
         else if (o.kind === "box") {                    // thùng các-tông có băng dính
           m = new THREE.Group(); m.add(RM.box(2 * o.hx, 0.4, 2 * o.hy, RM.M(0xD9B88E), o.x, 0.2, -o.y));
@@ -357,7 +368,11 @@
       if (!renderer) return;
       robot.position.copy(to3(sim.x, sim.y)); robot.rotation.y = sim.yaw;
       robot.userData.body.material = RM.M(sim.result === "vacham" || sim.bumped ? 0xD62839 : 0x0B2545, { roughness: 0.5 });
-      for (const m of objs) if (m.userData.mover) { const o = m.userData.o; m.position.copy(to3(o.x, o.y)); m.rotation.y = Math.atan2(o.vx, o.vy); }
+      for (const m of objs) if (m.userData.mover) {
+        const o = m.userData.o; m.position.copy(to3(o.x, o.y));
+        if (o.vx || o.vy) m.rotation.y = Math.atan2(o.vy, o.vx);
+        m.userData.pose && m.userData.pose(o.walk || 0, !!o.moving && S.playing);
+      }
       trailLine.geometry.dispose(); const tr = sim.trail, st = Math.max(1, Math.floor(tr.length / 1500));
       trailLine.geometry = new THREE.BufferGeometry().setFromPoints(tr.filter((_, i) => i % st === 0).map(([x, y]) => to3(x, y, 0.012)));
       (sim.rays || []).forEach(([x0, y0, x1, y1], i) => { rayLines[i].geometry.dispose(); rayLines[i].geometry = new THREE.BufferGeometry().setFromPoints([to3(x0, y0, 0.08), to3(x1, y1, 0.08)]);
@@ -468,6 +483,15 @@
     $("hsDist").textContent = n.goal && n.busy ? fmt(Math.hypot(n.goal.x - sim.x, n.goal.y - sim.y), 1) : "–";
     $("hsBumps").textContent = sim.bumps || 0;
     $("hsPhase").textContent = H.PHASE[n.phase] || "";
+    const memKey = JSON.stringify(n.mem) + (S.layout ? JSON.stringify(Object.keys(S.layout)) : "") + scenario?.obstacles.length;
+    if (force || memKey !== S.memKey) {
+      S.memKey = memKey;
+      $("hsMem").innerHTML = Object.entries(n.mem).map(([id, r]) => {
+        const o = scenario.obstacles.find(q => q.id === id); if (!o) return "";
+        const truth = H.roomAt(o.x, o.y), wrong = truth !== r;
+        return `<div class="${wrong ? "wrong" : ""}" title="${wrong ? "Thật ra đang ở " + esc(H.ROOMS[truth].name) : "Đúng"}"><span>${esc(o.label)}${o.id === "cay_ngu" ? " 2" : ""}</span><b>${esc(H.ROOMS[r].name.replace("Phòng ", "P. "))}</b></div>`;
+      }).join("");
+    }
     if (force || n.log.length !== S.logShown) {
       S.logShown = n.log.length;
       const L = $("hsLog");
@@ -617,10 +641,29 @@
   // ======================================================== SỬA BẢN ĐỒ / ĐẶT XE
   function applyTool(x, y) {
     if (isHouse()) {
-      if (S.tool !== "place") return;
       if (!H.roomAt(x, y)) return;
-      S.hStart = { x, y, yaw: S.hStart.yaw || 0 }; store.set("hStart", S.hStart);
-      S.tool = "none"; $("hsPlace").classList.remove("on"); buildHouse(); restart(); return;
+      if (S.tool === "place") {
+        S.hStart = { x, y, yaw: S.hStart.yaw || 0 }; store.set("hStart", S.hStart);
+        S.tool = "none"; $("hsPlace").classList.remove("on"); buildHouse(); restart(true); return;
+      }
+      if (S.tool === "move1") {
+        let best = null, bd = 0.7;
+        for (const o of scenario.obstacles) if (H.MOVABLE.includes(o.id)) { const d = Math.hypot(o.x - x, o.y - y); if (d < bd) { bd = d; best = o; } }
+        if (!best) { $("hsErr").textContent = "Chạm gần một món dời được: tivi, ghế bành, chậu cây, bàn trà, tủ lạnh, bàn làm việc, kệ sách, tủ quần áo."; return; }
+        S.moveSel = best.id; S.tool = "move2"; $("hsErr").textContent = `Đã chọn ${best.label}. Chạm vào chỗ mới.`; return;
+      }
+      if (S.tool === "move2") {
+        const o = scenario.obstacles.find(q => q.id === S.moveSel), e = o.kind === "cyl" ? [o.r, o.r] : [o.hx, o.hy];
+        const n = { x, y, hx: o.hx, hy: o.hy, face: o.face, room: H.roomAt(x, y) };
+        const box = { x, y, hx: e[0], hy: e[1] };
+        const clash = sim.allObstacles().some(q => q !== o && q.kind !== "mover" &&
+          Math.max(Math.abs(q.x - x) - (q.hx ?? q.r) - box.hx, Math.abs(q.y - y) - (q.hy ?? q.r) - box.hy) < 0.03);
+        if (clash) { $("hsErr").textContent = "Chỗ đó bị vướng tường hoặc đồ khác, chạm chỗ trống hơn."; return; }
+        S.layout = Object.assign({}, S.layout || {}, { [o.id]: n }); store.set("layout", S.layout);
+        $("hsErr").textContent = `Đã dời ${o.label} sang ${H.ROOMS[n.room].name.toLowerCase()}. Robot chưa biết – thử ra lệnh xem!`;
+        S.tool = "none"; S.moveSel = null; $("hsMove").classList.remove("on"); buildHouse(); restart(true); return;
+      }
+      return;
     }
     const B = sim.bounds;
     if (x < B.x0 + 0.1 || x > B.x1 - 0.1 || y < B.y0 + 0.1 || y > B.y1 - 0.1) return;
@@ -735,8 +778,24 @@
       S.tool = S.tool === "place" ? "none" : "place"; $("hsPlace").classList.toggle("on", S.tool === "place");
       $("hsErr").textContent = S.tool === "place" ? "Chạm vào chỗ trống trên mặt bằng để đặt xe." : "";
     };
-    $("hsPeople").onchange = () => { setPlaying(false); buildHouse(); restart(); };
-    $("hsBump").onchange = () => { setPlaying(false); buildHouse(); restart(); };
+    $("hsBump").onchange = () => { setPlaying(false); buildHouse(); restart(true); };
+    const MV = [["mvNguoiKhach", "nguoi_khach"], ["mvNguoiBep", "nguoi_bep"], ["mvMeo", "meo"]];
+    for (const [el, k] of MV) {
+      $(el).checked = S.movers.includes(k);
+      $(el).onchange = () => { S.movers = MV.filter(([e]) => $(e).checked).map(([, kk]) => kk); store.set("movers", S.movers); setPlaying(false); buildHouse(); restart(true); };
+    }
+    $("hsShuffle").onclick = () => {
+      S.layout = H.shuffleLayout(1 + Math.floor(Math.random() * 1e6), S.hStart); store.set("layout", S.layout);
+      setPlaying(false); buildHouse(); restart(true);
+      const moved = Object.keys(S.layout).filter(id => S.layout[id].room !== H.FURNITURE.find(f => f.id === id).room).length;
+      $("hsErr").textContent = `Đã xáo trộn ${Object.keys(S.layout).length} món (${moved} món sang phòng khác). Robot chưa biết – thử ra lệnh!`;
+    };
+    $("hsMove").onclick = () => {
+      S.tool = S.tool.startsWith("move") ? "none" : "move1"; $("hsMove").classList.toggle("on", S.tool !== "none");
+      $("hsErr").textContent = S.tool === "move1" ? "Chạm vào món đồ muốn dời (trên mặt bằng hoặc 3D)." : "";
+    };
+    $("hsRestore").onclick = () => { S.layout = null; store.set("layout", null); setPlaying(false); buildHouse(); restart(true); $("hsErr").textContent = "Đồ đạc đã về chỗ cũ."; };
+    $("hsForget").onclick = () => { S.nav.forget(); updateHouse(true); };
     setupMic();
     // sân
     $("btnUpload").onclick = () => $("fileBrain").click();

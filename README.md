@@ -26,7 +26,13 @@ kaggle-robot (huấn luyện PPO)  →  policy_pi.npz  →  tools/npz2json.py  �
 
 ## Tính năng
 
-**Chế độ Nhà thông minh** (mặc định): ra lệnh bằng chữ hoặc giọng nói, ví dụ "đi tới tủ lạnh" hay "vào phòng ngủ". Robot đọc mốc ArUco để tự nhận phòng, tìm đường qua các cửa theo sơ đồ mốc, nhận đồ vật bằng YOLO, rồi để bộ não PPO lái tới nơi. Khi bị chắn, robot quay một vòng quét siêu âm để tìm lối vòng. Có công tắc chạm, và có thể bật thêm người đi lại. Kiểm tra bằng `node test/house_test.js`: thành công 58/60 nhiệm vụ.
+**Chế độ Nhà thông minh** (mặc định): ra lệnh bằng chữ hoặc giọng nói, ví dụ "đi tới tủ lạnh" hay "vào phòng ngủ". Robot đọc mốc ArUco để tự nhận phòng, tìm đường qua các cửa theo sơ đồ mốc, nhận đồ vật bằng YOLO, rồi để bộ não PPO lái tới nơi. Khi bị chắn, robot quay một vòng quét siêu âm để tìm lối vòng. Có công tắc chạm. Có thể bật thêm đối tượng di chuyển: người ở phòng khách, người ở bếp và mèo; họ biết dừng nhường xe.
+
+**Dời đồ đạc:** có nút xáo trộn ngẫu nhiên, hoặc chạm để dời từng món. Robot không được báo khi đồ bị dời. Nó có **trí nhớ đồ vật**: tìm ở phòng cũ không thấy thì đi tìm các phòng khác, và vừa đi vừa nhìn để cập nhật trí nhớ.
+
+Kiểm tra:
+- `node test/house_test.js`: đồ ở chỗ cũ, thành công 56–58/60 nhiệm vụ.
+- `node test/house_shuffle_test.js`: đồ bị xáo trộn, có người và mèo đi lại, thành công 79/84.
 
 **Chế độ Sân huấn luyện 5 cấp:**
 
