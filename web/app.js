@@ -10,15 +10,15 @@
 
   // ------------------------------------------------------------ trạng thái
   const BUILTIN_BRAINS = [
-    { id: "cap3_kaggle_5cap", file: "brains/cap3_kaggle_5cap.json" },
     { id: "hoc_thang_300k", file: "brains/hoc_thang_300k.json" },
+    { id: "cap3_kaggle_5cap", file: "brains/cap3_kaggle_5cap.json" },
     { id: "cap2_kaggle_5cap", file: "brains/cap2_kaggle_5cap.json" },
     { id: "cap1_kaggle_5cap", file: "brains/cap1_kaggle_5cap.json" },
   ];
   const S = {
     cfg: Object.assign({}, C.DEFAULT_CFG, store.get("cfg", {})),
-    level: store.get("level", 3), seed: store.get("seed", 4),
-    brains: {}, controllerId: store.get("controller", "cap3_kaggle_5cap"),
+    level: store.get("level", 3), seed: store.get("seed2", 6),
+    brains: {}, controllerId: store.get("controller2", "hoc_thang_300k"),
     customFn: null, keys: { up: 0, down: 0, left: 0, right: 0 },
     playing: false, speed: 1, acc: 0, view: "2d", tool: "none",
     stats: { ep: 0, dich: 0, vacham: 0, hetgio: 0 }, lastBench: null, robots: {},
@@ -45,7 +45,7 @@
   function newScenario(seed) {
     S.seed = seed ?? S.seed; $("inSeed").value = S.seed;
     scenario = C.generateScenario(S.level, S.seed, S.cfg);
-    store.set("level", S.level); store.set("seed", S.seed);
+    store.set("level", S.level); store.set("seed2", S.seed);
     restart();
   }
   function restart() {
@@ -255,6 +255,7 @@
     else if (S.playing) st = '<span class="pill">● Đang chạy</span>';
     el.innerHTML = `<span class="pill">Cấp ${S.level}: ${esc(C.LEVELS[S.level].name)}</span>${st}` +
       (sim.safetyActive ? '<span class="pill bad">Lớp an toàn: dừng</span>' : "") +
+      (!sim.done && sim.cmdV < -0.02 ? '<span class="pill warn">◀ Đang lùi (không có cảm biến sau)</span>' : "") +
       `<span class="pill">${esc(brain)}</span>`;
   }
   const esc = s => String(s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
@@ -306,7 +307,7 @@
     sel.value = S.controllerId; onController();
   }
   function onController() {
-    S.controllerId = $("selBrain").value; store.set("controller", S.controllerId);
+    S.controllerId = $("selBrain").value; store.set("controller2", S.controllerId);
     $("joy").classList.toggle("show", S.controllerId === "manual");
     const b = S.brains[S.controllerId];
     $("brainInfo").textContent = b ? `Mạng MLP ${b.layers.map(l => l.b.length).join("-")}, ${b.params.toLocaleString("vi-VN")} tham số, đầu vào 12 số → (v, ω).`
@@ -334,7 +335,7 @@
 
   // ======================================================== CHẤM ĐIỂM
   function runBench(ids) {
-    const N = +$("selBenchN").value, out = $("benchOut"), rows = [], csv = [["bo_nao", "cap", "luot", "toi_dich", "va_cham", "het_gio"]];
+    const N = +$("selBenchN").value, out = $("benchOut"), rows = [], csv = [["bo_nao", "cap", "luot", "toi_dich", "va_cham", "het_gio", "ti_le_buoc_lui"]];
     out.innerHTML = '<p class="muted">Đang chấm…</p>';
     const jobs = []; ids.forEach(id => { for (let lv = 1; lv <= 5; lv++) jobs.push([id, lv]); });
     const res = {};
@@ -345,7 +346,7 @@
       const ctl = id === "manual" ? (() => [0, 0]) : (o => controllerFor(id)(o));
       const r = C.benchmark(ctl, lv, N, 50000, S.cfg);
       (res[id] = res[id] || {})[lv] = r;
-      csv.push([S.brains[id]?.name || id, lv, N, r.dich, r.vacham, r.hetgio]);
+      csv.push([S.brains[id]?.name || id, lv, N, r.dich, r.vacham, r.hetgio, r.rev.toFixed(3)]);
       out.innerHTML = `<p class="muted">Đang chấm… ${k}/${jobs.length}</p>`;
       setTimeout(tick, 0);
     };
@@ -354,10 +355,10 @@
       for (const id of ids) {
         h += `<tr><td>${esc(S.brains[id]?.name || id)}</td>` + [1, 2, 3, 4, 5].map(l => {
           const r = res[id][l], p = Math.round(r.succ * 100);
-          return `<td class="n"><b style="color:${p >= 80 ? "var(--green)" : p >= 60 ? "var(--amber)" : "var(--red)"}">${p}%</b><br><span class="muted">va ${Math.round(r.coll * 100)}%</span></td>`;
+          return `<td class="n"><b style="color:${p >= 80 ? "var(--green)" : p >= 60 ? "var(--amber)" : "var(--red)"}">${p}%</b><br><span class="muted">va ${Math.round(r.coll * 100)}%</span><br><span class="muted" style="color:${r.rev > 0.3 ? "var(--red)" : "inherit"}">lùi ${Math.round(r.rev * 100)}%</span></td>`;
         }).join("") + "</tr>";
       }
-      h += `</tbody></table><p class="muted">Tỉ lệ tới đích (trên) và va chạm (dưới), ${N} lượt mỗi cấp, bản đồ cố định theo seed – so sánh công bằng giữa các bộ não.</p>`;
+      h += `</tbody></table><p class="muted">Tỉ lệ tới đích, va chạm và % số bước đi lùi (lùi nhiều = lái mù vì cảm biến chỉ ở phía trước), ${N} lượt mỗi cấp, bản đồ cố định theo seed – so sánh công bằng giữa các bộ não.</p>`;
       out.innerHTML = h; S.lastBench = csv.map(r => r.join(",")).join("\n"); $("btnBenchCsv").disabled = false;
     };
     tick();

@@ -1,5 +1,7 @@
 # Phòng thí nghiệm robot ảo
 
+**Chạy ngay:** https://nshiep-tech.github.io/robot-mo-phong-web/
+
 **NGUYỄN SỸ HIỆP**, Trường Đại học Công nghệ Thông tin và Truyền thông (ICTU), Đại học Thái Nguyên
 
 Đây là một trang web chạy hoàn toàn trên trình duyệt (máy tính và điện thoại). Trang nạp **bộ não đã huấn luyện trên Kaggle**, rồi thả robot 2 bánh vào sân 5×5 m để xem nó tự lái và né vật cản theo thời gian thực, không cần phần cứng.
@@ -45,6 +47,9 @@ RobotLab.benchmark(3, 50);           // chấm điểm cấp 3, 50 lượt
 Muốn thêm một robot mới (drone, robot chó, xe 4 bánh…), viết một `Sim` mới trong `web/core.js` có cùng giao diện `load()` / `step()` / `obs`. Phần giao diện giữ nguyên.
 
 ## Lưu ý
+
+Bộ não bản 1 trên Kaggle (26/11) đi lùi khoảng 95% số bước. Lý do: điểm thưởng không phạt việc đi lùi, còn lớp an toàn chỉ chặn đi tiến, nên lùi trở thành cách "lách luật". Vì xe chỉ có cảm biến ở phía trước, lùi tức là lái mù. Bản 2 đã phạt đi lùi. Bảng chấm điểm trên trang có thêm cột % bước lùi để kiểm tra.
+
 
 Phần vật lý ở đây là bản 2D gần đúng của PyBullet. Cấp 1 đến 3 khớp với số liệu Kaggle; cấp 4 và 5 thấp hơn khoảng 10–18%. Trang này dùng để so sánh và giảng dạy; số liệu chính thức vẫn lấy từ Kaggle.
 

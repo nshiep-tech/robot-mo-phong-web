@@ -381,15 +381,15 @@
   // ---------------------------------------------- chấm điểm hàng loạt
   function benchmark(controller, level, episodes, seed0 = 50000, cfg = {}) {
     const sim = new Sim(cfg);
-    const res = { level, episodes, dich: 0, vacham: 0, hetgio: 0, steps: 0, rows: [] };
+    const res = { level, episodes, dich: 0, vacham: 0, hetgio: 0, steps: 0, lui: 0, rows: [] };
     for (let i = 0; i < episodes; i++) {
       const seed = seed0 + 100 * level + i;
       let obs = sim.load(generateScenario(level, seed, sim.cfg), { seed });
-      while (!sim.done) obs = sim.step(controller(obs, sim)).obs;
+      while (!sim.done) { obs = sim.step(controller(obs, sim)).obs; if (sim.cmdV < -0.02) res.lui++; }
       res[sim.result]++; res.steps += sim.steps;
       res.rows.push({ level, seed, result: sim.result, steps: sim.steps, return: +sim.ret.toFixed(2) });
     }
-    res.succ = res.dich / episodes; res.coll = res.vacham / episodes;
+    res.succ = res.dich / episodes; res.coll = res.vacham / episodes; res.rev = res.lui / Math.max(1, res.steps);
     return res;
   }
 
