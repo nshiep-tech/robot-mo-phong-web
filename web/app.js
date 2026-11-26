@@ -29,6 +29,7 @@
     stats: { ep: 0, dich: 0, vacham: 0, hetgio: 0 }, lastBench: null, robots: {},
     hStart: store.get("hStart", { x: -1.4, y: -1.0, yaw: 0 }), nav: new H.Navigator(), logShown: -1, cmdAt: 0,
     layout: store.get("layout", null), movers: store.get("movers", ["nguoi_khach"]), moveSel: null,
+    tabs: store.get("tabs", {}), sideOpen: false,
   };
   let sim = new C.Sim(S.cfg), scenario = null;
 
@@ -100,7 +101,7 @@
   function setPlaying(p) {
     S.playing = p;
     if (p && sim.done && !isHouse()) restart();
-    $("btnPlay").textContent = p ? "⏸ Dừng" : "▶ Chạy";
+    $("btnPlay").textContent = p ? "⏸" : "▶"; $("btnPlay").title = p ? "Dừng" : "Chạy";
   }
 
   // ============================================================ VẼ 2D
@@ -403,7 +404,7 @@
       cam.fov = v === "3dfpv" ? 2 * sim.cfg.cam_fov_half * 180 / Math.PI * 0.85 : 50; cam.updateProjectionMatrix();
       if (v === "3d") {
         const house = !!sim.sc?.house;
-        if (house) { cam.position.set(0.3, 6.6, 6.2); controls && controls.target.set(0, 0, 0.3); }
+        if (house) { cam.position.set(0.3, 7.0, 6.9); controls && controls.target.set(0, 0, 0.9); }
         else { cam.position.set(0, 5.2, 4.2); controls && controls.target.set(0, 0, 0); }
       }
       return true;
@@ -448,12 +449,13 @@
   }
 
   // ======================================================== BẢNG NHÀ
-  const CHIPS = [["Tủ lạnh", "đi tới tủ lạnh"], ["Sofa", "ra chỗ sofa"], ["Giường", "tới giường"], ["Tivi", "tới tivi"], ["Bàn ăn", "tới bàn ăn"],
-    ["Bồn rửa", "tới bồn rửa"], ["Bếp nấu", "tới bếp nấu"], ["Tủ quần áo", "tới tủ quần áo"], ["Bàn làm việc", "tới bàn làm việc"], ["Kệ sách", "tới kệ sách"],
-    ["Vào bếp", "vào bếp"], ["Vào phòng ngủ", "vào phòng ngủ"], ["Ra phòng khách", "ra phòng khách"]];
+  const CHIPS = [["🧊", "Tủ lạnh", "đi tới tủ lạnh"], ["🛋️", "Sofa", "ra chỗ sofa"], ["🛏️", "Giường", "tới giường"], ["📺", "Tivi", "tới tivi"],
+    ["🍽️", "Bàn ăn", "tới bàn ăn"], ["🚰", "Bồn rửa", "tới bồn rửa"], ["🔥", "Bếp nấu", "tới bếp nấu"], ["🚪", "Tủ quần áo", "tới tủ quần áo"],
+    ["💻", "Bàn làm việc", "tới bàn làm việc"], ["📚", "Kệ sách", "tới kệ sách"], ["🪴", "Chậu cây", "tới chậu cây"], ["🪑", "Ghế bành", "tới ghế bành"],
+    ["🍳", "Vào bếp", "vào bếp"], ["😴", "Phòng ngủ", "vào phòng ngủ"], ["🏠", "Phòng khách", "ra phòng khách"]];
   function sendCommand(text) {
     text = String(text || "").trim(); if (!text) return;
-    $("hsErr").textContent = "";
+    toast("");
     if (S.controllerId === "manual" || S.controllerId === "custom") { $("selBrain").value = Object.keys(S.brains)[0] || "hoc_thang_300k"; onController(); }
     if (sim.done) restart();
     S.nav.tNow = sim.steps / sim.cfg.control_hz;
@@ -503,15 +505,15 @@
   function setupMic() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     $("hsMic").onclick = () => {
-      if (!SR) { $("hsErr").textContent = "Trình duyệt này chưa hỗ trợ nhận giọng nói. Anh gõ lệnh vào ô bên cạnh."; return; }
+      if (!SR) { toast("Trình duyệt này chưa hỗ trợ nhận giọng nói. Anh gõ lệnh vào ô bên cạnh."); return; }
       try {
         const rec = new SR(); rec.lang = "vi-VN"; rec.interimResults = false; rec.maxAlternatives = 1;
-        $("hsMic").classList.add("rec"); $("hsErr").textContent = "Đang nghe…";
-        rec.onresult = e => { const t = e.results[0][0].transcript; $("hsCmd").value = t; $("hsErr").textContent = `Nghe được: “${t}”`; sendCommand(t); };
-        rec.onerror = e => { $("hsErr").textContent = e.error === "not-allowed" ? "Trang chưa được cấp quyền micro (một số trang nhúng chặn micro). Hãy gõ lệnh." : "Không nghe rõ: " + e.error; };
+        $("hsMic").classList.add("rec"); toast("Đang nghe…");
+        rec.onresult = e => { const t = e.results[0][0].transcript; $("hsCmd").value = t; toast(`Nghe được: “${t}”`); sendCommand(t); };
+        rec.onerror = e => { toast(e.error === "not-allowed" ? "Trang chưa được cấp quyền micro (một số trang nhúng chặn micro). Hãy gõ lệnh." : "Không nghe rõ: " + e.error); };
         rec.onend = () => $("hsMic").classList.remove("rec");
         rec.start();
-      } catch (e) { $("hsMic").classList.remove("rec"); $("hsErr").textContent = "Không bật được micro: " + e.message; }
+      } catch (e) { $("hsMic").classList.remove("rec"); toast("Không bật được micro: " + e.message); }
     };
   }
   function randomStart() {
@@ -649,8 +651,8 @@
       if (S.tool === "move1") {
         let best = null, bd = 0.7;
         for (const o of scenario.obstacles) if (H.MOVABLE.includes(o.id)) { const d = Math.hypot(o.x - x, o.y - y); if (d < bd) { bd = d; best = o; } }
-        if (!best) { $("hsErr").textContent = "Chạm gần một món dời được: tivi, ghế bành, chậu cây, bàn trà, tủ lạnh, bàn làm việc, kệ sách, tủ quần áo."; return; }
-        S.moveSel = best.id; S.tool = "move2"; $("hsErr").textContent = `Đã chọn ${best.label}. Chạm vào chỗ mới.`; return;
+        if (!best) { toast("Chạm gần một món dời được: tivi, ghế bành, chậu cây, bàn trà, tủ lạnh, bàn làm việc, kệ sách, tủ quần áo."); return; }
+        S.moveSel = best.id; S.tool = "move2"; toast(`Đã chọn ${best.label}. Chạm vào chỗ mới.`); return;
       }
       if (S.tool === "move2") {
         const o = scenario.obstacles.find(q => q.id === S.moveSel), e = o.kind === "cyl" ? [o.r, o.r] : [o.hx, o.hy];
@@ -658,9 +660,9 @@
         const box = { x, y, hx: e[0], hy: e[1] };
         const clash = sim.allObstacles().some(q => q !== o && q.kind !== "mover" &&
           Math.max(Math.abs(q.x - x) - (q.hx ?? q.r) - box.hx, Math.abs(q.y - y) - (q.hy ?? q.r) - box.hy) < 0.03);
-        if (clash) { $("hsErr").textContent = "Chỗ đó bị vướng tường hoặc đồ khác, chạm chỗ trống hơn."; return; }
+        if (clash) { toast("Chỗ đó bị vướng tường hoặc đồ khác, chạm chỗ trống hơn."); return; }
         S.layout = Object.assign({}, S.layout || {}, { [o.id]: n }); store.set("layout", S.layout);
-        $("hsErr").textContent = `Đã dời ${o.label} sang ${H.ROOMS[n.room].name.toLowerCase()}. Robot chưa biết – thử ra lệnh xem!`;
+        toast(`Đã dời ${o.label} sang ${H.ROOMS[n.room].name.toLowerCase()}. Robot chưa biết – thử ra lệnh xem!`);
         S.tool = "none"; S.moveSel = null; $("hsMove").classList.remove("on"); buildHouse(); restart(true); return;
       }
       return;
@@ -691,17 +693,27 @@
   }
 
   // ======================================================== CẤU HÌNH ROBOT
+  // [khóa, nhãn, nhỏ nhất, lớn nhất, bước, hệ số hiển thị, đơn vị]
   const CFG_FIELDS = [
-    ["wheel_base", "Khoảng cách 2 bánh (m)", 0.01], ["wheel_radius", "Bán kính bánh (m)", 0.001],
-    ["v_max", "Tốc độ tiến tối đa (m/s)", 0.01], ["w_max", "Tốc độ quay tối đa (rad/s)", 0.1],
-    ["sonar_range", "Tầm siêu âm (m)", 0.1], ["safety_stop", "Khoảng dừng an toàn (m)", 0.01],
-    ["cam_range", "Tầm YOLO tin cậy (m)", 0.1], ["collide_r", "Bán kính va chạm thân (m)", 0.005],
+    ["v_max", "🏎️ Tốc độ tiến tối đa", 0.1, 0.6, 0.01, 1, "m/s"], ["w_max", "🔄 Tốc độ quay tối đa", 0.5, 3, 0.1, 1, "rad/s"],
+    ["sonar_range", "📡 Tầm siêu âm", 0.5, 4, 0.1, 1, "m"], ["safety_stop", "🛑 Khoảng dừng an toàn", 0.05, 0.4, 0.01, 100, "cm"],
+    ["cam_range", "📷 Tầm YOLO tin cậy", 1, 6, 0.1, 1, "m"], ["cam_fov_half", "👁️ Góc nhìn camera", 0.26, 1.05, 0.01, 360 / Math.PI, "°"],
+    ["wheel_base", "↔️ Khoảng cách 2 bánh", 0.08, 0.25, 0.005, 100, "cm"], ["wheel_radius", "⭕ Bán kính bánh", 0.02, 0.05, 0.001, 1000, "mm"],
+    ["collide_r", "🔵 Bán kính thân xe", 0.07, 0.2, 0.005, 100, "cm"],
   ];
+  const cfgShow = (k, v) => { const f = CFG_FIELDS.find(x => x[0] === k); const d = v * f[5]; return (Math.abs(d) >= 10 ? d.toFixed(0) : d.toFixed(2)).replace(".", ",") + " " + f[6]; };
   function buildCfgForm() {
-    $("cfgForm").innerHTML = CFG_FIELDS.map(([k, n, st]) =>
-      `<label>${esc(n)}<br><input type="number" id="cf_${k}" step="${st}" value="${S.cfg[k]}" style="width:100%"></label>`).join("") +
-      `<label>Góc nhìn camera (độ)<br><input type="number" id="cf_fov" step="1" value="${Math.round(S.cfg.cam_fov_half * 360 / Math.PI)}" style="width:100%"></label>`;
+    $("cfgForm").innerHTML = CFG_FIELDS.map(([k, n, lo, hi, st]) =>
+      `<div class="sl ${Math.abs(S.cfg[k] - C.DEFAULT_CFG[k]) > 1e-9 ? "changed" : ""}" id="sl_${k}"><span>${esc(n)}</span><b id="sv_${k}">${cfgShow(k, S.cfg[k])}</b>
+        <input type="range" id="cf_${k}" min="${lo}" max="${hi}" step="${st}" value="${S.cfg[k]}" aria-label="${esc(n)}"></div>`).join("");
+    for (const [k] of CFG_FIELDS) {
+      const el = $("cf_" + k);
+      el.oninput = () => { $("sv_" + k).textContent = cfgShow(k, +el.value); };
+      el.onchange = () => { applyCfg(Object.assign({}, S.cfg, { [k]: +el.value })); toast(`Đã đổi ${CFG_FIELDS.find(f => f[0] === k)[1].replace(/^\S+\s/, "").toLowerCase()} → ${cfgShow(k, +el.value)}`); };
+    }
   }
+  let toastT = 0;
+  function toast(msg, ms = 4500) { $("hsErr").textContent = msg; clearTimeout(toastT); if (msg) toastT = setTimeout(() => { $("hsErr").textContent = ""; }, ms); }
   function applyCfg(cfg) {
     S.cfg = cfg; store.set("cfg", Object.fromEntries(Object.entries(cfg).filter(([k]) => cfg[k] !== C.DEFAULT_CFG[k])));
     sim = new C.Sim(S.cfg); buildCfgForm(); restart();
@@ -725,7 +737,7 @@
     S.view = v;
     for (const [id, vv] of [["v2d", "2d"], ["v3d", "3d"], ["v3dFollow", "3dfollow"], ["v3dFpv", "3dfpv"]]) $(id).classList.toggle("on", vv === v);
     if (v === "2d") three.hide();
-    else if (!three.setMode(v)) { $("hsErr").textContent = $("brainErr").textContent = "Không tải được thư viện 3D, đang dùng mặt bằng 2D."; S.view = "2d"; $("v2d").classList.add("on"); $("v3d").classList.remove("on"); }
+    else if (!three.setMode(v)) { toast($("brainErr").textContent = "Không tải được thư viện 3D, đang dùng mặt bằng 2D."); S.view = "2d"; $("v2d").classList.add("on"); $("v3d").classList.remove("on"); }
     render();
   }
   const LEGENDS = {
@@ -735,26 +747,37 @@
   function setMode(m) {
     S.mode = m; store.set("mode", m);
     $("modeHouse").classList.toggle("on", m === "house"); $("modeTrain").classList.toggle("on", m === "train");
-    $("panelHouse").classList.toggle("hide", m !== "house"); $("panel").classList.toggle("hide", m === "house");
-    $("autoWrap").classList.toggle("hide", m === "house");
-    $("btnNew").textContent = m === "house" ? "🎲 Chỗ xuất phát ngẫu nhiên" : "🎲 Bản đồ mới";
+    document.querySelectorAll("#rail button").forEach(b => b.classList.toggle("hide", !(b.dataset.m === "both" || b.dataset.m === m)));
+    $("cmdbar").classList.toggle("hide", m !== "house"); $("helpLayers").classList.toggle("hide", m !== "house");
+    $("btnNew").title = m === "house" ? "Chỗ xuất phát ngẫu nhiên" : "Bản đồ mới";
     $("headline").textContent = m === "house" ? "Robot nhận lệnh trong nhà" : "Sân huấn luyện 5 cấp";
+    openTab(S.tabs[m] || (m === "house" ? "cmd" : "level"), !matchMedia("(max-width: 820px)").matches || S.sideOpen);
     $("subline").textContent = m === "house"
       ? "Ra lệnh “đi tới tủ lạnh”: robot tự nhận phòng, tìm mốc cửa, qua cửa, nhận ra đồ vật bằng YOLO và để bộ não PPO lái tới nơi."
       : "Thả xe vào sân 5×5 m giống lúc huấn luyện, xem bộ não tự lái, né vật cản và chấm điểm hàng loạt.";
     $("legend").innerHTML = LEGENDS[m].map(([c, t]) => `<span style="--c:${c}">${esc(t)}</span>`).join("");
     setPlaying(false); S.tool = "none";
-    const st = $("stage");
-    st.style.aspectRatio = m === "house" ? "8.24 / 6.24" : "1 / 1";
-    st.style.maxWidth = m === "house" ? "" : "min(100%, 74vh)";
     newScenario();
     setViewMode(m === "house" ? (S.view === "2d" ? "2d" : "3d") : (S.view === "3d" ? "2d" : S.view));
     resize2d(); three.size(); render();
   }
 
+  // ======================================================== THANH ICON + SIDEBAR
+  function openTab(tab, open = true) {
+    S.tabs[S.mode] = tab; store.set("tabs", S.tabs); S.sideOpen = open;
+    document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.tab === tab));
+    document.querySelectorAll("#rail button").forEach(b => b.classList.toggle("on", open && b.dataset.tab === tab));
+    const sec = document.querySelector(`.tab[data-tab="${tab}"]`); $("sideTitle").textContent = sec ? sec.dataset.title : "";
+    $("side").classList.toggle("closed", !open);
+    if (tab === "prog" || tab === "mem") updateHouse(true);
+    if (tab === "think") updatePanel();
+  }
+
   // ======================================================== SỰ KIỆN
   function bind() {
     $("modeHouse").onclick = () => setMode("house"); $("modeTrain").onclick = () => setMode("train");
+    $("rail").onclick = e => { const b = e.target.closest("button[data-tab]"); if (!b) return; const same = S.tabs[S.mode] === b.dataset.tab && S.sideOpen; openTab(b.dataset.tab, !same); };
+    $("sideClose").onclick = () => openTab(S.tabs[S.mode], false);
     $("selLevel").innerHTML = Object.entries(C.LEVELS).map(([k, L]) => `<option value="${k}">Cấp ${k}: ${esc(L.name)}</option>`).join("");
     $("selLevel").value = S.level;
     $("selLevel").onchange = e => { S.level = +e.target.value; newScenario(); };
@@ -770,13 +793,13 @@
     $("v2d").onclick = () => setViewMode("2d"); $("v3d").onclick = () => setViewMode("3d");
     $("v3dFollow").onclick = () => setViewMode("3dfollow"); $("v3dFpv").onclick = () => setViewMode("3dfpv");
     // nhà
-    $("hsChips").innerHTML = CHIPS.map(([t, c]) => `<button class="chip" data-c="${esc(c)}">${esc(t)}</button>`).join("");
+    $("hsChips").innerHTML = CHIPS.map(([i, t, c]) => `<button class="chip" data-c="${esc(c)}"><span class="i">${i}</span>${esc(t)}</button>`).join("");
     $("hsChips").onclick = e => { const b = e.target.closest("button[data-c]"); if (b) sendCommand(b.dataset.c); };
     $("hsSend").onclick = () => sendCommand($("hsCmd").value);
     $("hsCmd").addEventListener("keydown", e => { if (e.key === "Enter") sendCommand($("hsCmd").value); });
     $("hsPlace").onclick = () => {
       S.tool = S.tool === "place" ? "none" : "place"; $("hsPlace").classList.toggle("on", S.tool === "place");
-      $("hsErr").textContent = S.tool === "place" ? "Chạm vào chỗ trống trên mặt bằng để đặt xe." : "";
+      toast(S.tool === "place" ? "Chạm vào chỗ trống trên mặt bằng để đặt xe." : "");
     };
     $("hsBump").onchange = () => { setPlaying(false); buildHouse(); restart(true); };
     const MV = [["mvNguoiKhach", "nguoi_khach"], ["mvNguoiBep", "nguoi_bep"], ["mvMeo", "meo"]];
@@ -788,13 +811,13 @@
       S.layout = H.shuffleLayout(1 + Math.floor(Math.random() * 1e6), S.hStart); store.set("layout", S.layout);
       setPlaying(false); buildHouse(); restart(true);
       const moved = Object.keys(S.layout).filter(id => S.layout[id].room !== H.FURNITURE.find(f => f.id === id).room).length;
-      $("hsErr").textContent = `Đã xáo trộn ${Object.keys(S.layout).length} món (${moved} món sang phòng khác). Robot chưa biết – thử ra lệnh!`;
+      toast(`Đã xáo trộn ${Object.keys(S.layout).length} món (${moved} món sang phòng khác). Robot chưa biết – thử ra lệnh!`);
     };
     $("hsMove").onclick = () => {
       S.tool = S.tool.startsWith("move") ? "none" : "move1"; $("hsMove").classList.toggle("on", S.tool !== "none");
-      $("hsErr").textContent = S.tool === "move1" ? "Chạm vào món đồ muốn dời (trên mặt bằng hoặc 3D)." : "";
+      toast(S.tool === "move1" ? "Chạm vào món đồ muốn dời (trên mặt bằng hoặc 3D)." : "");
     };
-    $("hsRestore").onclick = () => { S.layout = null; store.set("layout", null); setPlaying(false); buildHouse(); restart(true); $("hsErr").textContent = "Đồ đạc đã về chỗ cũ."; };
+    $("hsRestore").onclick = () => { S.layout = null; store.set("layout", null); setPlaying(false); buildHouse(); restart(true); toast("Đồ đạc đã về chỗ cũ."); };
     $("hsForget").onclick = () => { S.nav.forget(); updateHouse(true); };
     setupMic();
     // sân
@@ -824,7 +847,6 @@
     $("btnCfgApply").onclick = () => {
       const cfg = Object.assign({}, S.cfg);
       for (const [k] of CFG_FIELDS) { const v = parseFloat($("cf_" + k).value); if (Number.isFinite(v) && v > 0) cfg[k] = v; }
-      const f = parseFloat($("cf_fov").value); if (Number.isFinite(f) && f > 5) cfg.cam_fov_half = f * Math.PI / 360;
       applyCfg(cfg);
     };
     $("btnCfgDefault").onclick = () => applyCfg(Object.assign({}, C.DEFAULT_CFG));
