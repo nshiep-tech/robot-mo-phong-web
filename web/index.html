@@ -14,7 +14,7 @@
 :root{color-scheme:light;
   --navy:#0B2545;--navy2:#13315C;--navy3:#1F4E8C;--sky:#EAF0F8;--sky2:#F4F7FC;
   --red:#D62839;--red2:#FDECEE;--ink:#0E1A2B;--muted:#5A6B82;--line:#DCE3EE;--bg:#EEF2F8;
-  --ok:#1E7B4F;--warn:#A15C00;--r:12px;--head:58px;--rail:72px;--side:360px;
+  --ok:#1E7B4F;--warn:#A15C00;--r:12px;--head:58px;--rail:68px;--side:316px;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--shadow:0 2px 10px rgba(11,37,69,.10)}
 *{box-sizing:border-box;min-width:0}
 html,body{height:100%}
@@ -144,35 +144,52 @@ textarea{width:100%;min-height:170px;border:1px solid var(--line);border-radius:
 .modal.show{display:flex}
 .modal .box{background:#fff;border-radius:16px;max-width:720px;width:100%;padding:16px;max-height:90vh;overflow:auto}
 .hide{display:none!important}
+.roomrow{display:grid;grid-template-columns:64px minmax(0,1fr);gap:6px;align-items:start;padding:6px 0;border-bottom:1px solid #EEF2F7}
+.roomrow:last-child{border-bottom:0}
+.rbtn{border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:9px;padding:5px 2px;font-size:11px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.15;min-height:48px;justify-content:center}
+.rbtn .i{font-size:17px}
+.icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(50px,1fr));gap:4px}
+.obj{width:100%;border:1px solid var(--line);background:var(--sky2);border-radius:9px;padding:4px 1px 3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--navy2)}
+.obj .i{font-size:19px;line-height:1.1}
+.obj .t{font-size:9.5px;font-weight:600;line-height:1.1;text-align:center}
+.obj:hover,.obj.on{background:var(--sky);border-color:var(--red)}
+#cmdSlot .cmdbar{margin-bottom:10px;position:static;box-shadow:none}
+
 @media(max-width:820px){
-  :root{--head:52px;--side:100%}
+  :root{--head:50px;--side:100%}
+  body{overflow:auto}
   .sch,.ttl,.seg .t{display:none}
   .who{font-size:14px}
   .seg{margin-left:auto}
-  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto 62px}
-  .view{grid-row:1;padding:6px}
-  .side{grid-row:2;width:100%;max-height:44vh;border-right:0;border-top:1px solid var(--line)}
-  .side.closed{max-height:0;width:100%;border-top:0}
+  .app{display:flex;flex-direction:column;height:auto}
+  .view{order:1}
+  .side{order:2}
+  /* sân ghim ở đầu màn hình, kích thước cố định: mở tùy chọn không làm sân nhỏ lại */
+  .view{position:sticky;top:0;z-index:6;background:var(--bg);padding:6px 6px 5px;gap:5px}
+  .stage{flex:none;height:calc(100svh - 62px - 62px - 20px)}
+  body.side-open .stage{height:58svh}
+  .side{width:100%;border-right:0;border-top:1px solid var(--line);padding-bottom:72px;transition:none}
+  .side.closed{display:none}
   .sidehead,.sidebody{min-width:0}
   .sidehead{padding:8px 12px 6px}
-  .rail{grid-row:3;flex-direction:row;border-right:0;border-top:1px solid var(--line);padding:4px;overflow-x:auto;gap:2px}
-  .rail button{min-width:60px;min-height:52px;flex:none}
+  .sidebody{overflow:visible;padding:10px 12px 12px}
+  .rail{position:fixed;left:0;right:0;bottom:0;z-index:10;flex-direction:row;border-right:0;border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom));overflow-x:auto;gap:2px;box-shadow:0 -2px 10px rgba(11,37,69,.06)}
+  .rail button{min-width:58px;min-height:50px;flex:1 0 58px}
   .rail .sp{display:none}
   .rail button.on{box-shadow:inset 0 3px 0 var(--red)}
-  .view{gap:5px}
   .hud{top:6px;left:6px;right:6px;gap:4px}
   .pill{font-size:11px;padding:2px 8px}
-  .ctl{gap:5px}
-  .ctl .cmdbar{order:-1;flex-basis:100%}
-  .cmdbar input{height:38px}
-  .ib{min-width:32px;height:36px;padding:0 2px;font-size:15px}
-  .dock{padding:3px;gap:2px}
-  .dock select{height:36px;width:52px;padding:0 2px;font-size:12px}
+  .ctl{gap:4px;flex-wrap:nowrap}
+  .ctl .cmdbar{display:none}
+  #cmdSlot .cmdbar{display:flex}
+  .cmdbar input{height:40px}
+  .ib{min-width:30px;height:36px;padding:0 2px;font-size:15px}
+  .dock{padding:3px;gap:1px}
+  .dock select{height:36px;width:50px;padding:0 1px;font-size:12px}
   .dock.play .hidem{display:none}
   .dock .sep{margin:0}
-  .ctl .play{order:1}
-  .ctl .views{order:2;margin-left:auto}
-  .side{max-height:40vh}
+  .ctl .views{margin-left:auto}
+  .toast{bottom:8px;font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -208,8 +225,9 @@ textarea{width:100%;min-height:170px;border:1px solid var(--line);border-radius:
     <div class="sidehead"><b id="sideTitle">Lệnh</b><button id="sideClose" title="Ẩn bảng (sân mở rộng)" aria-label="Ẩn bảng">✕</button></div>
     <div class="sidebody">
       <section class="tab" data-tab="cmd" data-title="💬 Ra lệnh cho robot">
-        <div class="grp"><div class="gt">Chạm để ra lệnh</div><div class="chips" id="hsChips"></div></div>
-        <div class="grp"><div class="gt">Hoặc gõ / nói</div><p class="note">Dùng ô lệnh ngay dưới sân mô phỏng, ví dụ “đi tới tủ lạnh”, “vào phòng ngủ tìm cái giường”. Nút 🎤 nghe tiếng Việt (Chrome).</p></div>
+        <div id="cmdSlot"></div>
+        <div class="grp"><div class="gt">Chạm đồ vật để ra lệnh</div><div id="hsChips"></div></div>
+        <p class="note">Gõ hoặc nói (🎤, Chrome): “đi tới tủ lạnh”, “vào phòng ngủ tìm cái giường”.</p>
       </section>
 
       <section class="tab" data-tab="prog" data-title="🧭 Tiến trình nhiệm vụ">
@@ -363,7 +381,7 @@ textarea{width:100%;min-height:170px;border:1px solid var(--line);border-radius:
     <div class="ctl" id="ctl">
       <div class="dock views" role="group" aria-label="Góc nhìn">
         <button class="ib" id="v2d" title="Mặt bằng 2D">🗺️</button><button class="ib on" id="v3d" title="3D xoay">🧊</button>
-        <button class="ib" id="v3dFollow" title="Bám xe">🎥</button><button class="ib" id="v3dFpv" title="Mắt robot">👁️</button>
+        <button class="ib" id="v3dFollow" title="Bám xe">🎥</button><button class="ib" id="v3dFpv" title="Mắt robot">👁️</button><button class="ib on" id="vLabels" title="Hiện / ẩn tên đồ vật">🏷️</button>
       </div>
       <div class="dock cmdbar" id="cmdbar">
         <input type="text" id="hsCmd" placeholder="Ra lệnh: đi tới tủ lạnh…" aria-label="Lệnh" enterkeyhint="go">

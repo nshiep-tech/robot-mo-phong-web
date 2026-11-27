@@ -29,7 +29,7 @@
     stats: { ep: 0, dich: 0, vacham: 0, hetgio: 0 }, lastBench: null, robots: {},
     hStart: store.get("hStart", { x: -1.4, y: -1.0, yaw: 0 }), nav: new H.Navigator(), logShown: -1, cmdAt: 0,
     layout: store.get("layout", null), movers: store.get("movers", ["nguoi_khach"]), moveSel: null,
-    tabs: store.get("tabs", {}), sideOpen: false,
+    tabs: store.get("tabs", {}), sideOpen: false, labels: store.get("labels", true),
   };
   let sim = new C.Sim(S.cfg), scenario = null;
 
@@ -226,7 +226,7 @@
         drawMarker2d(d.marker, d.x, d.y + d.width / 2 + 0.02);
       }
       for (const m of H.ROOM_MARKERS) drawMarker2d(m.marker, m.x + m.n[0] * 0.12, m.y + m.n[1] * 0.12);
-      for (const o of sim.sc.obstacles) if (o.model && o.label && o.model !== "chair" && o.kind !== "cyl" || (o.kind === "cyl" && o.label))
+      for (const o of sim.sc.obstacles) if (S.labels || (tgt && o.id === tgt.id)) if (o.model && o.label && o.model !== "chair" && o.kind !== "cyl" || (o.kind === "cyl" && o.label))
         label(o.label, sx(o.x), sy(o.y), Math.max(9, px * 0.085), tgt && o.id === tgt.id ? "#fff" : COL.navy, tgt && o.id === tgt.id ? COL.red : "rgba(255,255,255,.82)");
       if (nav.goal && nav.busy) { const x = sx(nav.goal.x), y = sy(nav.goal.y), r = Math.max(6, px * 0.09);
         g.strokeStyle = COL.red; g.lineWidth = 2; g.beginPath(); g.arc(x, y, r, 0, 7); g.moveTo(x - r * 1.6, y); g.lineTo(x + r * 1.6, y); g.moveTo(x, y - r * 1.6); g.lineTo(x, y + r * 1.6); g.stroke(); }
@@ -450,6 +450,16 @@
   }
 
   // ======================================================== BẢNG NHÀ
+  const ICON = { sofa: "🛋️", ban_tra: "☕", tivi: "📺", ghe_banh: "🪑", ke_sach: "📚", cay_khach: "🪴", tu_lanh: "🧊", bon_rua: "🚰", bep_nau: "🔥",
+    ban_an: "🍽️", giuong: "🛏️", tu_quan_ao: "🚪", ban_lam_viec: "💻", cay_ngu: "🪴" };
+  const ROOM_ICON = { khach: "🛋️", bep: "🍳", ngu: "😴" };
+  function buildChips() {                               // đồ vật xếp theo phòng: [nút vào phòng] + lưới icon
+    $("hsChips").innerHTML = Object.entries(H.ROOMS).map(([rk, R]) => {
+      const objs = H.FURNITURE.filter(f => f.room === rk && f.label && f.model !== "chair");
+      return `<div class="roomrow"><button class="rbtn" data-c="vào ${esc(R.name.toLowerCase())}" title="Vào ${esc(R.name)}"><span class="i">${ROOM_ICON[rk]}</span>${{ khach: "Khách", bep: "Bếp", ngu: "Ngủ" }[rk]}</button>
+        <div class="icons">${objs.map(f => `<button class="obj" data-c="tới ${esc(f.label.toLowerCase())}${f.id === "cay_ngu" ? " phòng ngủ" : f.id === "cay_khach" ? " phòng khách" : ""}" title="Tới ${esc(f.label)}"><span class="i">${ICON[f.id] || "📦"}</span><span class="t">${esc(f.label)}</span></button>`).join("")}</div></div>`;
+    }).join("");
+  }
   const CHIPS = [["🧊", "Tủ lạnh", "đi tới tủ lạnh"], ["🛋️", "Sofa", "ra chỗ sofa"], ["🛏️", "Giường", "tới giường"], ["📺", "Tivi", "tới tivi"],
     ["🍽️", "Bàn ăn", "tới bàn ăn"], ["🚰", "Bồn rửa", "tới bồn rửa"], ["🔥", "Bếp nấu", "tới bếp nấu"], ["🚪", "Tủ quần áo", "tới tủ quần áo"],
     ["💻", "Bàn làm việc", "tới bàn làm việc"], ["📚", "Kệ sách", "tới kệ sách"], ["🪴", "Chậu cây", "tới chậu cây"], ["🪑", "Ghế bành", "tới ghế bành"],
@@ -769,7 +779,7 @@
     document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.tab === tab));
     document.querySelectorAll("#rail button").forEach(b => b.classList.toggle("on", open && b.dataset.tab === tab));
     const sec = document.querySelector(`.tab[data-tab="${tab}"]`); $("sideTitle").textContent = sec ? sec.dataset.title : "";
-    $("side").classList.toggle("closed", !open);
+    $("side").classList.toggle("closed", !open); document.body.classList.toggle("side-open", open);
     if (tab === "prog" || tab === "mem") updateHouse(true);
     if (tab === "think") updatePanel();
   }
@@ -794,7 +804,12 @@
     $("v2d").onclick = () => setViewMode("2d"); $("v3d").onclick = () => setViewMode("3d");
     $("v3dFollow").onclick = () => setViewMode("3dfollow"); $("v3dFpv").onclick = () => setViewMode("3dfpv");
     // nhà
-    $("hsChips").innerHTML = CHIPS.map(([i, t, c]) => `<button class="chip" data-c="${esc(c)}"><span class="i">${i}</span>${esc(t)}</button>`).join("");
+    buildChips();
+    const mq = matchMedia("(max-width: 820px)");
+    const placeCmd = () => { if (mq.matches) $("cmdSlot").appendChild($("cmdbar")); else $("ctl").insertBefore($("cmdbar"), document.querySelector("#ctl .play")); };
+    placeCmd(); mq.addEventListener ? mq.addEventListener("change", placeCmd) : mq.addListener(placeCmd);
+    $("vLabels").onclick = () => { S.labels = !S.labels; store.set("labels", S.labels); $("vLabels").classList.toggle("on", S.labels); render(); };
+    $("vLabels").classList.toggle("on", S.labels);
     $("hsChips").onclick = e => { const b = e.target.closest("button[data-c]"); if (b) sendCommand(b.dataset.c); };
     $("hsSend").onclick = () => sendCommand($("hsCmd").value);
     $("hsCmd").addEventListener("keydown", e => { if (e.key === "Enter") sendCommand($("hsCmd").value); });

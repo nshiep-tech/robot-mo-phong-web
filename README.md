@@ -11,6 +11,20 @@ kaggle-robot (huấn luyện PPO)  →  policy_pi.npz  →  tools/npz2json.py  �
                                          └──────────── nạp thẳng .npz trên trang ───────────┘
 ```
 
+## Bật trang chạy trên GitHub (GitHub Pages) – làm 1 lần
+
+Repo đã ở chế độ **Public**. Còn một bước bật Pages, chỉ chủ repo bấm được:
+
+1. Mở trình duyệt (không dùng app GitHub) và đăng nhập **nshiep-tech**.
+2. Vào thẳng: https://github.com/nshiep-tech/robot-mo-phong-web/settings/pages
+3. Mục **Build and deployment**:
+   - **Source**: chọn *Deploy from a branch*
+   - **Branch**: chọn `main`, ô bên cạnh chọn `/ (root)`, rồi bấm **Save**
+4. Đợi 1–2 phút, tải lại trang. Phía trên sẽ hiện dòng *Your site is live at …*
+5. Mở: **https://nshiep-tech.github.io/robot-mo-phong-web/** (tự chuyển vào thư mục `web/`)
+
+Từ đó, mỗi lần đẩy mã mới lên `main`, trang tự cập nhật sau khoảng 1 phút.
+
 ## Cấu trúc
 
 | Thư mục / file | Vai trò |
