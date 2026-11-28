@@ -32,6 +32,7 @@ Từ đó, mỗi lần đẩy mã mới lên `main`, trang tự cập nhật sau
 | `web/index.html` | Giao diện (đầu trang ghi tên và trường; hiển thị tốt trên điện thoại) |
 | `web/core.js` | Lõi mô phỏng: động học vi sai, động cơ TT, siêu âm, YOLO giả lập, 5 cấp kịch bản, mạng MLP, chấm điểm. Chạy được cả trong Node. |
 | `web/house.js` | Nhà ảo 3 phòng, mốc ArUco, bộ điều phối lệnh (hiểu lệnh → nhận phòng → qua cửa → tìm đồ vật → bộ não lái) |
+| `web/bay.html` | Lab bầy robot (một file, không phụ thuộc file khác): 4 bản đồ 14,4 × 10 m, kiến trúc 9 lớp, mạng mesh, encoder/IMU/lidar/UWB |
 | `web/models.js` | Mô hình 3D đồ đạc (sofa, tủ lạnh, giường…) và robot |
 | `web/app.js` | Vẽ 2D/3D, bảng số liệu, sửa bản đồ, cấu hình robot, lái tay, mã tự viết |
 | `web/brains/` | Các bộ não đã đổi sang JSON (định dạng `robot2wd-mlp-v1`) |
@@ -47,6 +48,14 @@ Từ đó, mỗi lần đẩy mã mới lên `main`, trang tự cập nhật sau
 Kiểm tra:
 - `node test/house_test.js`: đồ ở chỗ cũ, thành công 56–58/60 nhiệm vụ.
 - `node test/house_shuffle_test.js`: đồ bị xáo trộn, có người và mèo đi lại, thành công 79/84.
+
+**Chế độ Bầy robot** (`web/bay.html`, nút 🛰 trên thanh đầu trang): sân 14,4 × 10 m (144 m², gấp 3 nhà cũ), không có Wi-Fi.
+
+1. Bốn bản đồ: 🏠 Nhà lớn 5 phòng (lệnh nhiều điểm như `B C E S`), 📦 Kho hàng (4 robot, lối kệ hẹp phải đặt chỗ), 🧱 Tòa nhà mất sóng (robot tự dừng làm trạm tiếp sóng), 🏥 Khoa bệnh viện (giao thuốc, tin "đã giao" đi qua mạng mesh về quầy trực).
+2. Kiến trúc 9 lớp hiện trực tiếp cho robot đang chọn: giao tiếp người, nhiệm vụ, bản đồ chung, định vị, tìm đường A*, phối hợp bầy, lái + an toàn, liên lạc mesh, phần cứng.
+3. Định vị: encoder + IMU MPU6050, lidar 2D 72 tia so khớp với bản đồ mặt bằng, UWB đo khoảng cách tới trạm và robot đứng yên. Tắt từng cảm biến để thấy vị trí ước lượng lệch dần.
+4. Mạng mesh: phát cho tất cả, bắc cầu nhiều bước, đồng bộ kiểu lan truyền, giữ và chuyển khi mất sóng. Sóng suy giảm qua tường gạch (8 dB) và bê tông (16 dB).
+5. Lớp lái dùng bộ bám mốc, chưa nạp bộ não PPO. Thông số cảm biến và sóng là giả định để minh họa.
 
 **Chế độ Sân huấn luyện 5 cấp:**
 

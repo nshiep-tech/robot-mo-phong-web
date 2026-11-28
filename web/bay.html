@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab bầy robot – Nguyễn Sỹ Hiệp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Lab bầy robot – cùng bộ màu với lab 1 robot: xanh hải quân, trắng, đỏ; nền sáng */
+:root{color-scheme:light;--navy:#0B2545;--navy2:#13315C;--navy3:#1F4E8C;--sky:#EAF0F8;--sky2:#F4F7FC;--red:#D62839;--line:#D6DEEA;--mut:#56627a;--ink:#0f1b33}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:#fff;color:var(--ink);font:16px/1.55 "Be Vietnam Pro",system-ui,sans-serif;overflow-x:clip}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:10px max(3vw,12px);border-bottom:3px solid var(--red);background:#fff}
+.logo{width:34px;height:34px;flex:none}
+.who{font-weight:700;color:var(--navy);letter-spacing:.02em;font-size:15px}
+.sch{font-size:12.5px;color:var(--mut)}
+.nav{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.nav a{min-height:40px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid var(--line);border-radius:9px;color:var(--navy2);text-decoration:none;font-weight:600;font-size:14px}
+.nav a.on{background:var(--sky);border-color:var(--navy3);box-shadow:inset 0 -2px 0 var(--red)}
+.band{padding:clamp(14px,2.5vw,28px) max(3vw,12px);max-width:1360px;margin:0 auto}
+h1{font-size:clamp(24px,3.6vw,38px);line-height:1.08;margin:0 0 6px;color:var(--navy);font-weight:700;text-wrap:balance}
+h2{font-size:21px;color:var(--navy);margin:0 0 10px;font-weight:700}
+.lead{color:var(--mut);max-width:78ch;margin:0}
+.maps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 10px}
+@media(max-width:760px){.maps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mapb{border:1px solid var(--line);background:var(--sky2);border-radius:12px;padding:9px 10px;text-align:left;cursor:pointer;color:var(--navy2);font:inherit;min-height:64px}
+.mapb b{display:block;font-size:15px;color:var(--navy)}
+.mapb span{font-size:12.5px;color:var(--mut);line-height:1.3;display:block}
+.mapb[aria-pressed=true]{background:#fff;border-color:var(--navy3);box-shadow:inset 0 -3px 0 var(--red)}
+button,select,input{font:inherit;font-size:16px}
+.btn{min-height:44px;padding:6px 14px;border:1px solid var(--line);background:#fff;color:var(--navy2);border-radius:9px;cursor:pointer;font-weight:600}
+.btn.red{background:var(--red);color:#fff;border-color:var(--red)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #7aa2ff;outline-offset:2px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.ctl label{font-size:14px;color:var(--mut);display:flex;gap:6px;align-items:center}
+.ctl input[type=text]{min-height:44px;padding:6px 10px;border:1px solid var(--line);border-radius:9px;width:12em}
+.ctl select{min-height:44px;border:1px solid var(--line);border-radius:9px;padding:0 8px;background:#fff;color:var(--navy2)}
+.ctl input[type=checkbox]{width:18px;height:18px;accent-color:var(--navy)}
+.sens{display:flex;flex-wrap:wrap;gap:4px 14px;margin:-2px 0 10px}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:16px}
+@media(max-width:980px){.sim{grid-template-columns:minmax(0,1fr)}}
+.fieldwrap{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 2px 10px rgba(11,37,69,.06)}
+canvas{display:block;width:100%;touch-action:manipulation}
+.legend{font-size:13px;color:var(--mut);padding:7px 10px;border-top:1px solid var(--line);background:var(--sky2)}
+.kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+@media(max-width:600px){.kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi div{border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:#fff}
+.kpi b{display:block;font-size:20px;color:var(--navy);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12.5px;color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.chip{min-height:38px;padding:4px 14px;border-radius:19px;border:2px solid;background:#fff;cursor:pointer;font-size:14px;font-weight:600}
+.layers{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.layer{border-top:1px solid var(--line)}
+.layer:first-child{border-top:0}
+.layer summary{list-style:none;cursor:pointer;padding:7px 12px;display:grid;gap:1px}
+.layer summary::-webkit-details-marker{display:none}
+.layer .nm{font-weight:700;color:var(--navy);font-size:14.5px}
+.layer .val{font-size:13.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+.layer .val.hot{color:var(--red)}
+.layer .ex{padding:0 12px 10px;font-size:13.5px;color:var(--mut)}
+.layer:nth-child(-n+3){background:var(--sky2)}
+.layer:nth-child(n+8){background:#fdf3f4}
+.tier{font-size:12px;color:var(--mut);margin:6px 2px 0}
+.log{border:1px solid var(--line);border-radius:12px;max-height:230px;overflow:auto;margin-top:10px;font-size:13.5px}
+.log div{padding:6px 10px;border-top:1px solid #edf0f5}
+.log div:first-child{border-top:0}
+.log .sys{color:var(--mut)}
+.log .msg b{color:var(--red)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--navy);background:var(--sky)}
+.yes{color:var(--red);font-weight:700;white-space:nowrap}.no{color:#1d6b3a;font-weight:700;white-space:nowrap}.mid{color:#9a5b00;font-weight:700;white-space:nowrap}
+.note{font-size:14px;color:var(--mut);margin-top:10px}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;color:var(--mut)}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<header>
+<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="9" width="22" height="14" rx="4" fill="#0B2545"/><circle cx="11.5" cy="16" r="2.6" fill="#fff"/><circle cx="20.5" cy="16" r="2.6" fill="#fff"/><rect x="14" y="3" width="4" height="6" rx="1.5" fill="#D62839"/><rect x="3" y="24" width="8" height="4" rx="2" fill="#13315C"/><rect x="21" y="24" width="8" height="4" rx="2" fill="#13315C"/></svg>
+<div><div class="who">NGUYỄN SỸ HIỆP</div><div class="sch">Trường Đại học Công nghệ Thông tin và Truyền thông – Đại học Thái Nguyên</div></div>
+<nav class="nav" aria-label="Chế độ"><a href="index.html">🏠 Nhà · 🎯 Sân 5 cấp</a><a href="bay.html" class="on" aria-current="page">🛰 Bầy robot</a></nav>
+</header>
+
+<section class="band">
+<h1>Bầy robot tự tìm đường và nối mạng với nhau</h1>
+<p class="lead">Sân 14,4 × 10 m (144 m², gấp 3 nhà cũ). Không có Wi-Fi: các robot tự nối mạng lưới, bắc cầu qua nhau, chia sẻ những gì thấy được. Chạm vào một robot để xem 9 lớp của nó; vòng nét đứt là chỗ robot <i>tưởng</i> mình đang đứng.</p>
+<div class="maps" role="group" aria-label="Bản đồ">
+<button class="mapb" data-m="1"><b>🏠 Nhà lớn 5 phòng</b><span>Lệnh nhiều điểm, tìm sự cố trong nhà</span></button>
+<button class="mapb" data-m="2"><b>📦 Kho hàng</b><span>4 robot, lối kệ hẹp phải đặt chỗ</span></button>
+<button class="mapb" data-m="3"><b>🧱 Tòa nhà mất sóng</b><span>Tự dừng làm trạm tiếp sóng</span></button>
+<button class="mapb" data-m="4"><b>🏥 Khoa bệnh viện</b><span>Giao thuốc, báo về quầy trực</span></button>
+</div>
+<div class="ctl">
+<button class="btn red" id="run">▶ Chạy</button>
+<button class="btn" id="reset">↺ Làm lại</button>
+<label>Tốc độ <select id="spd"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option><option value="8">8×</option></select></label>
+<label id="cntL">Số robot <select id="cnt"></select></label>
+<span id="misL" class="ctl" style="margin:0"><label for="mis">Lộ trình R1</label><input type="text" id="mis" aria-label="Lộ trình robot 1"><button class="btn" id="go1">Giao lệnh</button></span>
+</div>
+<div class="sens ctl">
+<label><input type="checkbox" id="imu" checked> IMU MPU6050</label>
+<label><input type="checkbox" id="lid" checked> Lidar 2D</label>
+<label><input type="checkbox" id="uwb" checked> UWB</label>
+<label><input type="checkbox" id="rng" checked> Liên kết sóng</label>
+<label><input type="checkbox" id="ovl"> Bản đồ lidar của bầy</label>
+</div>
+<div class="sim">
+<div>
+<div class="fieldwrap"><canvas id="cv" aria-label="Sân mô phỏng"></canvas><div class="legend" id="leg"></div></div>
+<div class="kpi" id="kpi"></div>
+<div class="log" id="log" aria-live="polite"></div>
+</div>
+<div>
+<div class="chips" id="chips"></div>
+<div class="layers" id="layers"></div>
+<p class="tier">Nền xanh nhạt: lớp quyết định · nền trắng: lớp di chuyển · nền hồng nhạt: liên lạc và phần cứng. Chạm vào một lớp để xem vai trò và ví dụ.</p>
+</div>
+</div>
+</section>
+
+<section class="band">
+<h2>Có phải huấn luyện lại bộ não không?</h2>
+<p class="lead" style="margin-bottom:12px">Phần lớn là không. Bộ não PPO chỉ là lớp 7 và chỉ nhìn 12 số quanh mình cùng mốc gần nhất. Nó không biết sân to hay nhỏ, có mấy điểm đến, có bao nhiêu robot hay vị trí đến từ cảm biến nào.</p>
+<table class="stack">
+<thead><tr><th>Thay đổi</th><th>Huấn luyện lại?</th><th>Vì sao</th></tr></thead>
+<tbody>
+<tr><td>Sân rộng gấp 3, bản đồ mới</td><td class="no">Không</td><td>A* (lớp 5) chia đường thành mốc cách nhau tối đa 1 m, nên khoảng cách đưa vào bộ não vẫn trong khoảng đã gặp khi huấn luyện.</td></tr>
+<tr><td>Lệnh nhiều điểm, giao hàng</td><td class="no">Không</td><td>Lớp nhiệm vụ chỉ ghép nhiều lần “đi tới” mà bộ não đã biết làm.</td></tr>
+<tr><td>Encoder, IMU, lidar, UWB</td><td class="no">Không</td><td>Chúng phục vụ lớp 4 (định vị) và lớp 3 (bản đồ). Chỉ khi muốn bộ não nhìn thẳng tia lidar thay cho siêu âm mới phải đổi đầu vào và huấn luyện lại.</td></tr>
+<tr><td>Mạng mesh, đặt chỗ, nhường đường</td><td class="no">Không</td><td>Là luật ở lớp 6 và 8, nằm ngoài bộ não lái.</td></tr>
+<tr><td>Gặp robot khác đi ngược chiều</td><td class="mid">Nên tinh chỉnh</td><td>Ở cấp 5 (vật di động), bộ não bản 2 còn va 26%. Nên thêm cấp 6 “robot đối diện” và huấn luyện tiếp khoảng 0,5–1 triệu bước từ bản 2.</td></tr>
+<tr><td>Bầy tự học cách hợp tác</td><td class="yes">Có</td><td>Phải huấn luyện mới bằng MAPPO (học tăng cường nhiều tác tử).</td></tr>
+</tbody></table>
+<p class="note">Trên trang này lớp 7 lái bằng bộ bám mốc cộng lớp an toàn, chưa nạp bộ não PPO. Các thông số là giả định để minh họa: encoder sai tỉ lệ ±3% và thỉnh thoảng trượt bánh; IMU lệch 0,005 rad/s; lidar 72 tia, tầm 6 m, so khớp với bản đồ mặt bằng 4 lần/giây; UWB sai khoảng 5 cm. Sóng: −40 − 30·log₁₀(d) dBm, mỗi tường gạch trừ 8 dB, tường bê tông trừ 16 dB; nối được khi tín hiệu trên −85 dBm.</p>
+</section>
+
+<script>
+{
+const W=14.4,H=10,C=0.1,GW=144,GH=100,VMAX=.45,DT=1/30,NR=72,LMAX=6;
+const grid=new Uint8Array(GW*GH),infl=new Uint8Array(GW*GH),near=new Uint8Array(GW*GH),mapS=new Uint8Array(GW*GH);
+const id=(cx,cy)=>cy*GW+cx;
+const cellOf=(x,y)=>id(Math.max(0,Math.min(GW-1,Math.floor(x/C))),Math.max(0,Math.min(GH-1,Math.floor(y/C))));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const f1=v=>v.toFixed(1).replace('.',','),f2=v=>v.toFixed(2).replace('.',',');
+let seed=7;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};const randn=()=>{const u=rnd()||1e-9,v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v)};
+const COLORS=['#D62839','#1F5FD1','#0F7A55','#8A4FC9'];
+const $=k=>document.getElementById(k);
+
+function fill(xa,ya,xb,yb,v){for(let cy=Math.max(0,Math.floor(ya/C));cy<Math.min(GH,Math.ceil(yb/C)+1);cy++){const y=(cy+.5)*C;if(y<ya||y>yb)continue;for(let cx=Math.max(0,Math.floor(xa/C));cx<Math.min(GW,Math.ceil(xb/C)+1);cx++){const x=(cx+.5)*C;if(x>=xa&&x<=xb)grid[id(cx,cy)]=v}}}
+function hw(y,x0,x1,gaps=[],v=1){const t=v==2?.15:.1;let a=x0;for(const g of [...gaps].sort((p,q)=>p[0]-q[0])){if(g[0]>a)fill(a,y-t,g[0],y+t,v);a=g[1]}if(x1>a)fill(a,y-t,x1,y+t,v)}
+function vw(x,y0,y1,gaps=[],v=1){const t=v==2?.15:.1;let a=y0;for(const g of [...gaps].sort((p,q)=>p[0]-q[0])){if(g[0]>a)fill(x-t,a,x+t,g[0],v);a=g[1]}if(y1>a)fill(x-t,a,x+t,y1,v)}
+function outer(v=1){hw(.1,0,W,[],v);hw(H-.1,0,W,[],v);vw(.1,0,H,[],v);vw(W-.1,0,H,[],v)}
+function furn(x0,y0,x1,y1,col,lb){S.furn.push({x0,y0,x1,y1,col,lb});fill(x0,y0,x1,y1,3)}
+function inflate(){infl.fill(0);near.fill(0);for(let cy=0;cy<GH;cy++)for(let cx=0;cx<GW;cx++){if(!grid[id(cx,cy)])continue;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const X=cx+dx,Y=cy+dy;if(X<0||Y<0||X>=GW||Y>=GH)continue;if(dx*dx+dy*dy<=5)infl[id(X,Y)]=1;if(Math.abs(dx)<=1&&Math.abs(dy)<=1)near[id(X,Y)]=1}}}
+
+class Heap{constructor(){this.a=[]}get n(){return this.a.length}
+push(f,i){const a=this.a;a.push([f,i]);let k=a.length-1;while(k>0){const p=(k-1)>>1;if(a[p][0]<=a[k][0])break;[a[p],a[k]]=[a[k],a[p]];k=p}}
+pop(){const a=this.a,top=a[0],last=a.pop();if(a.length){a[0]=last;let k=0;for(;;){const l=2*k+1,r=l+1;let m=k;if(l<a.length&&a[l][0]<a[m][0])m=l;if(r<a.length&&a[r][0]<a[m][0])m=r;if(m==k)break;[a[m],a[k]]=[a[k],a[m]];k=m}}return top[1]}}
+function free(x,y,ex){const i=cellOf(x,y);return !grid[i]&&!infl[i]&&!(ex&&ex.has(i))}
+function losFree(ax,ay,bx,by,ex){const d=Math.hypot(bx-ax,by-ay),n=Math.max(1,Math.ceil(d/.05));for(let k=0;k<=n;k++)if(!free(ax+(bx-ax)*k/n,ay+(by-ay)*k/n,ex))return false;return true}
+function losRaw(ax,ay,bx,by){const d=Math.hypot(bx-ax,by-ay),n=Math.max(1,Math.ceil(d/.05));for(let k=1;k<n;k++)if(grid[cellOf(ax+(bx-ax)*k/n,ay+(by-ay)*k/n)])return false;return true}
+function astar(sx,sy,gx,gy,ex){
+  const hard=i=>grid[i]||(ex&&ex.has(i));const s=cellOf(sx,sy);let g=cellOf(gx,gy);
+  if(hard(g)||infl[g]){let best=-1,bd=1e9;const a=g%GW,b=(g/GW)|0;for(let dy=-8;dy<=8;dy++)for(let dx=-8;dx<=8;dx++){const x=a+dx,y=b+dy;if(x<0||y<0||x>=GW||y>=GH)continue;const j=id(x,y);if(hard(j)||infl[j])continue;const d=dx*dx+dy*dy;if(d<bd){bd=d;best=j}}if(best<0)return null;g=best}
+  const N=GW*GH,gs=new Float32Array(N).fill(1e9),came=new Int32Array(N).fill(-1),cl=new Uint8Array(N),hp=new Heap();
+  const gcx=g%GW,gcy=(g/GW)|0,hf=i=>{const dx=Math.abs(i%GW-gcx),dy=Math.abs(((i/GW)|0)-gcy);return Math.max(dx,dy)+.414*Math.min(dx,dy)};
+  gs[s]=0;hp.push(hf(s),s);
+  while(hp.n){const i=hp.pop();if(cl[i])continue;cl[i]=1;if(i===g)break;const cx=i%GW,cy=(i/GW)|0;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const j=id(nx,ny);if(hard(j)||cl[j])continue;
+      if(dx&&dy&&(grid[id(cx+dx,cy)]||grid[id(cx,cy+dy)]))continue;
+      const c=gs[i]+(dx&&dy?1.414:1)*(infl[j]?8:1);if(c<gs[j]){gs[j]=c;came[j]=i;hp.push(c+hf(j),j)}}}
+  if(g!==s&&came[g]<0)return null;
+  const pts=[];for(let i=g;i!==-1&&i!==s;i=came[i])pts.push([(i%GW+.5)*C,(((i/GW)|0)+.5)*C]);pts.reverse();
+  const out=[];let cur=[sx,sy],k=0;
+  while(k<pts.length){let far=k;for(let m=Math.min(pts.length-1,k+120);m>k;m--){if(losFree(cur[0],cur[1],pts[m][0],pts[m][1],ex)){far=m;break}}
+    const p=pts[far],dd=Math.hypot(p[0]-cur[0],p[1]-cur[1]);
+    if(dd>1){const n=Math.ceil(dd/1);for(let q=1;q<n;q++)out.push([cur[0]+(p[0]-cur[0])*q/n,cur[1]+(p[1]-cur[1])*q/n])}
+    out.push(p);cur=p;k=far+1}
+  return out}
+function disk(x,y,r){const s=new Set(),cx=Math.floor(x/C),cy=Math.floor(y/C),R=Math.ceil(r/C);for(let dy=-R;dy<=R;dy++)for(let dx=-R;dx<=R;dx++){if(dx*dx+dy*dy>R*R)continue;const X=cx+dx,Y=cy+dy;if(X>=0&&Y>=0&&X<GW&&Y<GH)s.add(id(X,Y))}return s}
+function rssi(a,b){const d=Math.max(.3,Math.hypot(a.x-b.x,a.y-b.y)),n=Math.ceil(d/.05);let att=0,prev=0;for(let k=1;k<n;k++){const v=grid[cellOf(a.x+(b.x-a.x)*k/n,a.y+(b.y-a.y)*k/n)];if(v&&v!==prev)att+=v==2?16:v==1?8:1;prev=v}return -40-30*Math.log10(d)-att}
+
+let S={run:false};
+const cv=$('cv'),ctx=cv.getContext('2d'),bgC=document.createElement('canvas'),mapC=document.createElement('canvas');
+let sc=40,dpr=1;
+function mkRobot(i,x,y,th=0){return{i,name:'R'+(i+1),color:COLORS[i],x,y,th,v:0,w:0,path:null,wp:0,goal:null,state:'idle',task:'Chờ lệnh',coord:'',hold:false,waitT:0,replanT:0,sonar:3,safety:false,msgs:new Map(),ex:x,ey:y,eth:th,encS:(rnd()-.5)*.06,encW:(rnd()-.5)*.06,gyB:(rnd()-.5)*.01,scan:null,anchors:[],err:0,bump:false,lidOk:false}}
+function plan(r,gx,gy,ex){const p=astar(r.ex,r.ey,gx,gy,ex);r.goal=[gx,gy];if(p){r.path=p;r.wp=0;return true}r.path=null;return false}
+function sys(t){S.log.unshift({sys:1,t:S.t,txt:t});if(S.log.length>90)S.log.pop()}
+const room=(x0,x1,y0,y1,name,floor)=>S.rooms.push({x0,x1,y0,y1,name,floor});
+
+const MAPS={
+1:{cnt:[1,2,3],def:2,mis:'B C E S',other:['D A S','F C S'],
+ build(){outer();
+  room(0,6,0,10,'Phòng khách','wood');room(6,10.4,0,4,'Bếp','tile');room(10.4,14.4,0,4,'Phòng tắm','tile');room(6,14.4,4,5.6,'Hành lang','hall');room(6,10.2,5.6,10,'Phòng ngủ 1','carpet');room(10.2,14.4,5.6,10,'Phòng ngủ 2','carpet');
+  vw(6,0,10,[[1.4,2.4],[4.1,5.5]]);hw(4,6,14.4,[[11.8,12.8]]);vw(10.4,0,4,[[1.6,2.6]]);hw(5.6,6,14.4,[[7.5,8.5],[11.6,12.6]]);vw(10.2,5.6,10);
+  furn(.4,6.4,1.2,9.4,'#7d8fb3','Sofa');furn(2.2,7.3,3,8.5,'#c9a77c','Bàn trà');furn(5.3,6.4,5.8,9.4,'#4b5568','Kệ tivi');furn(2,1.4,3.8,2.6,'#c9a77c','Bàn ăn');
+  furn(6.3,.3,10.1,.9,'#b9c3cf','Tủ bếp');furn(9.4,1,10.1,1.8,'#dfe5ec','Tủ lạnh');furn(13.2,.4,14.1,1.6,'#e4ecf1','Bồn tắm');
+  furn(6.4,7.6,8.4,9.7,'#c8b6dc','Giường');furn(9.3,6,9.9,7.2,'#a68b6b','Tủ');furn(12.2,7.6,14.1,9.7,'#c8b6dc','Giường');furn(10.6,9.2,11.6,9.8,'#a68b6b','Bàn học');
+  S.pts={S:[1,.9],A:[3.4,4.8],B:[8,2.4],C:[12.3,2.6],D:[8.2,6.8],E:[12,6.8],F:[9.6,4.8]};
+  S.persons=[{x:13.2,y:6.5,lb:'Người ngã'},{x:7,y:1.4,lb:'Bếp gas còn bật'},{x:11.4,y:3.3,lb:'Vòi nước chảy'},{x:1.6,y:9.4,lb:'Vật lạ'}];
+  S.base={name:'Trạm',x:.6,y:.6,msgs:new Map(),base:1};
+  const st=[[1.2,1.2],[1.2,3],[2.6,3.4]];S.robots=st.slice(0,S.n).map((p,i)=>mkRobot(i,p[0],p[1]));
+  S.legend='S trạm sạc · A phòng khách · B bếp · C phòng tắm · D, E phòng ngủ · F hành lang. Mỗi điểm đến robot dừng quét 1,5 s. Tường gạch làm sóng yếu; robot ở sâu trong phòng ngủ phải nhờ robot khác chuyển tin về trạm.'}},
+2:{cnt:[2,3,4],def:4,
+ build(){outer();room(0,W,0,H,'Kho hàng','ware');
+  const ys=[1.3,3,4.7,6.4,8.1];for(const y of ys)furn(3,y-.25,11.4,y+.25,'#d9a441','Kệ');
+  S.zones=[[1.55,2.75],[3.25,4.45],[4.95,6.15],[6.65,7.85]].map(([a,b])=>({x0:3,x1:11.4,y0:a,y1:b,lock:null}));
+  furn(.4,4.4,1.2,5.6,'#9aa3b2','Xe nâng');furn(13.2,4.4,14,5.6,'#9aa3b2','Pallet');
+  S.pts={L1:[1,.8],L2:[1,9.2],R1:[13.4,.8],R2:[13.4,9.2]};
+  S.persons=[{x:7.2,y:4.2,lb:'Hàng rơi giữa lối'},{x:12.6,y:7,lb:'Vũng dầu'}];
+  S.base={name:'Trạm',x:.5,y:5,msgs:new Map(),base:1};
+  const G=[[[7.2,2.15],[13.4,9.2]],[[7.2,5.55],[1,9.2]],[[7.2,3.85],[13.4,.8]],[[7.2,7.25],[1,.8]]],st=[[1,.8],[13.4,9.2],[1,9.2],[13.4,.8]];
+  S.robots=[];for(let i=0;i<S.n;i++){const r=mkRobot(i,st[i][0],st[i][1],i%2?Math.PI:0);r.goals=G[i];r.gi=0;S.robots.push(r)}
+  S.cmd='Lấy hàng giữa lối kệ, mang ra bến xuất';
+  S.legend='4 lối kệ vàng nhạt, mỗi lối chỉ rộng 1,2 m: robot phải đặt chỗ trước khi vào, robot khác chờ ở đầu lối. Ở hai đầu kho, robot số nhỏ đi trước, robot số lớn nhường đường.'}},
+3:{cnt:[4],def:4,
+ build(){outer();room(0,3.2,0,H,'Sảnh','hall');room(3.2,W,0,H,'Khu bê tông','conc');
+  vw(3.2,0,H,[[4.4,5.4]],2);vw(6.4,0,H,[[.6,1.6]],2);vw(9.6,0,H,[[8.4,9.4]],2);vw(12.2,0,H,[[.6,1.6]],2);
+  hw(6.4,3.2,6.4,[[4.4,5.3]]);hw(3.6,6.4,9.6,[[7.6,8.5]]);furn(7.4,5.6,8.4,6.6,'#8b8f98','Đổ nát');furn(10.4,4.2,11.4,5.4,'#8b8f98','Đổ nát');
+  S.pts={T:[13.4,9]};
+  S.persons=[{x:5.4,y:9,lb:'Người bị kẹt'},{x:8,y:1.4,lb:'Người bị kẹt'},{x:11,y:7,lb:'Điểm cháy'},{x:13.6,y:9.4,lb:'Người bị kẹt'},{x:13.4,y:3,lb:'Vật lạ'}];
+  S.base={name:'Trạm',x:.6,y:5,msgs:new Map(),base:1};
+  S.robots=[[1.2,3.8],[1.2,4.6],[1.2,5.4],[1.2,6.2]].map((p,i)=>{const r=mkRobot(i,p[0],p[1]);r.delay=i*3.2;r.state='wait';r.task='Chờ xuất phát ('+f1(r.delay)+' s)';return r});
+  S.tail=S.base;S.cmd='Cả bầy vào tòa nhà, tìm người, báo về trạm';
+  S.legend='Tường bê tông dày làm mất 16 dB. Robot đi theo nào có sóng tới mắt xích cuối yếu dưới −78 dBm thì dừng làm trạm tiếp sóng. Robot đầu đàn đi tiếp dù mất sóng: nó lưu dữ liệu, tới T rồi quay về để gửi.'}},
+4:{cnt:[1,2,3],def:3,mis:'P1 P3 K',other:['P5 P2 K','P6 P4 K'],
+ build(){outer();room(0,W,4.2,5.8,'Hành lang','hall');
+  const nm=['Kho thuốc','P101','P102','P103'],nb=['Quầy trực','P104','P105','P106'];
+  for(let k=0;k<4;k++){room(k*3.6,k*3.6+3.6,0,4.2,nm[k],k?'care':'tile');room(k*3.6,k*3.6+3.6,5.8,H,nb[k],k?'care':'tile')}
+  hw(4.2,0,W,[[1.3,2.3],[4.9,5.9],[8.5,9.5],[12.1,13.1]]);hw(5.8,0,W,[[1.3,2.3],[4.9,5.9],[8.5,9.5],[12.1,13.1]]);
+  for(const x of [3.6,7.2,10.8]){vw(x,0,4.2);vw(x,5.8,H)}
+  furn(.3,.3,3.3,.9,'#b9c3cf','Kệ thuốc');furn(.3,9.1,2.4,9.7,'#b9c3cf','Bàn trực');
+  for(const x0 of [3.6,7.2,10.8]){furn(x0+.3,.4,x0+1.3,2.4,'#dfe7f2','Giường');furn(x0+2.3,.4,x0+3.3,2.4,'#dfe7f2','Giường');furn(x0+.3,7.6,x0+1.3,9.6,'#dfe7f2','Giường');furn(x0+2.3,7.6,x0+3.3,9.6,'#dfe7f2','Giường')}
+  S.pts={K:[1.8,2.2],P1:[5.4,2.6],P2:[9,2.6],P3:[12.6,2.6],P4:[5.4,7.4],P5:[9,7.4],P6:[12.6,7.4]};
+  S.persons=[{x:9,y:9.4,lb:'Bệnh nhân bấm chuông'}];
+  S.base={name:'Trạm',x:1,y:8.2,msgs:new Map(),base:1};
+  const st=[[.9,1.8],[1.8,1.5],[2.7,1.8]];S.robots=st.slice(0,S.n).map((p,i)=>mkRobot(i,p[0],p[1],Math.PI/2));
+  S.legend='K kho thuốc · P1–P6 phòng bệnh. Mỗi lần giao xong, robot tạo một tin “đã giao” và tin đó phải tìm đường qua mạng mesh về quầy trực (ô vuông T góc dưới trái).'}}};
+
+function build(m){const M=MAPS[m];grid.fill(0);mapS.fill(0);seed=7;
+  const prevN=S.m===m&&S.n?S.n:M.def;
+  S={m,n:M.cnt.includes(prevN)?prevN:M.def,run:S.run,t:0,log:[],robots:[],persons:[],furn:[],rooms:[],zones:[],links:[],pts:{},gossipT:0,locT:0,sel:0,seen:0,bumps:0,delivered:0,sens:{imu:1,lid:1,uwb:1},cmd:''};
+  $('cnt').innerHTML=M.cnt.map(c=>'<option'+(c===S.n?' selected':'')+'>'+c+'</option>').join('');$('cntL').hidden=M.cnt.length<2;
+  $('misL').hidden=!M.mis;if(M.mis&&(!$('mis').value||$('mis').dataset.m!=m)){$('mis').value=M.mis;$('mis').dataset.m=m}
+  M.build();inflate();S.tot=GW*GH;
+  S.persons.forEach((p,k)=>{p.id='#'+(k+1);p.seen=false});
+  if(M.mis)S.robots.forEach((r,k)=>setMission(r,k?M.other[k-1]:$('mis').value));
+  $('leg').textContent=S.legend;
+  document.querySelectorAll('.mapb').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m==m));
+  sys('Nạp bản đồ: '+document.querySelector('.mapb[data-m="'+m+'"] b').textContent);
+  renderChips();renderLayers();resize()}
+
+function setMission(r,txt){const keys=Object.keys(S.pts);const q=String(txt).toUpperCase().split(/[\s,>→\-]+/).filter(k=>keys.includes(k));
+  r.queue=q.length?q:MAPS[S.m].mis.split(' ');r.step=0;r.total=r.queue.length;
+  if(r.i===0)S.cmd='"Đi '+r.queue.join(' → ')+(S.m==4?', giao thuốc':', thấy gì thì báo')+'"';
+  sys(r.name+' nhận lộ trình: '+r.queue.join(' → '));nextStop(r)}
+function nextStop(r){if(!r.queue.length){r.state='done';r.path=null;r.task='Hoàn thành lộ trình';sys(r.name+' hoàn thành lộ trình');return}
+  const k=r.queue.shift();r.step++;r.cur=k;r.state='go';r.task='Bước '+r.step+'/'+r.total+': đi tới '+k;plan(r,...S.pts[k])}
+
+function ahead(r,o,c=.35){const dx=o.x-r.x,dy=o.y-r.y,d=Math.hypot(dx,dy)||1;return (dx*Math.cos(r.th)+dy*Math.sin(r.th))/d>c}
+function inZ(x,y,z,m=0){return x>z.x0-m&&x<z.x1+m&&y>z.y0-m&&y<z.y1+m}
+function needsZ(r,z){if(!r.path)return false;let px=r.x,py=r.y;for(let k=r.wp;k<r.path.length;k++){const[q,w]=r.path[k];for(let s=0;s<=8;s++)if(inZ(px+(q-px)*s/8,py+(w-py)*s/8,z))return true;px=q;py=w}return false}
+function avoidSet(r){const ex=new Set();for(const o of S.robots){if(o===r||Math.hypot(o.x-r.x,o.y-r.y)>2.5)continue;for(const c of disk(o.x,o.y,.38))ex.add(c)}return ex}
+function coordinate(r,dt){r.hold=false;r.coord='';r.replanT-=dt;
+  for(const z of S.zones){if(!r.path)break;const inside=inZ(r.x,r.y,z),zn='lối kệ '+(S.zones.indexOf(z)+1);
+    if(inside){if(z.lock==null)z.lock=r.i;if(z.lock===r.i){r.coord='Đang giữ chỗ '+zn;r['in'+S.zones.indexOf(z)]=1}}
+    else{const k='in'+S.zones.indexOf(z);if(z.lock===r.i&&(r[k]||!needsZ(r,z))){z.lock=null;r[k]=0;sys(r.name+' ra khỏi '+zn+', nhả chỗ')}
+      if(needsZ(r,z)&&inZ(r.x,r.y,z,.7)){if(z.lock==null){z.lock=r.i;sys(r.name+' đặt chỗ '+zn)}else if(z.lock!==r.i){r.hold=true;r.coord='Chờ '+S.robots[z.lock].name+' ra khỏi '+zn}}}}
+  if(r.state==='relay'||r.state==='done'||!r.path)return;
+  for(const o of S.robots){if(o===r)continue;const d=Math.hypot(o.x-r.x,o.y-r.y);if(d>.9||!ahead(r,o))continue;const still=o.v<.03;
+    if(!still&&o.i<r.i&&!r.hold){r.hold=true;r.waitT+=dt;r.coord='Nhường đường cho '+o.name;if(r.waitT>3&&r.replanT<=0){r.replanT=2;r.waitT=0;plan(r,...r.goal,avoidSet(r))}}
+    else if((still||o.i>r.i)&&r.replanT<=0){r.replanT=2;if(plan(r,...r.goal,avoidSet(r)))r.coord='Đi vòng tránh '+o.name}}
+  if(!r.hold)r.waitT=0}
+
+function sonar(r){for(let d=.15;d<3;d+=.03){if(grid[cellOf(r.x+d*Math.cos(r.th),r.y+d*Math.sin(r.th))])return d-.15}return 3}
+function move(r,v,w,dt){if(v===0&&w===0)return;
+  let vt=v*(1+.03*randn()),wt=w+.04*randn();if(v>0&&rnd()<.004)vt*=.2;
+  const th=wrap(r.th+wt*dt),nx=r.x+vt*Math.cos(th)*dt,ny=r.y+vt*Math.sin(th)*dt;r.th=th;
+  if(grid[cellOf(nx,ny)]){if(!r.bump){S.bumps++;sys(r.name+' chạm vật (định vị sai '+f2(r.err)+' m)')}r.bump=true}else{r.x=nx;r.y=ny;r.bump=false}
+  const ve=v*(1+r.encS),we=S.sens.imu?wt+r.gyB+.005*randn():wt+r.encW+.03*randn();
+  r.eth=wrap(r.eth+we*dt);r.ex+=ve*Math.cos(r.eth)*dt;r.ey+=ve*Math.sin(r.eth)*dt}
+function drive(r,dt){r.safety=false;r.sonar=sonar(r);
+  if(r.state==='scan'){r.v=0;r.w=1.8;move(r,0,1.8,dt);r.scanT-=dt;if(r.scanT<=0)nextStop(r);return false}
+  if(!r.path||r.wp>=r.path.length){r.v=0;r.w=0;return !!r.path}
+  let[tx,ty]=r.path[r.wp];let dx=tx-r.ex,dy=ty-r.ey,d=Math.hypot(dx,dy);
+  if(d<.15){r.wp++;if(r.wp>=r.path.length){r.v=0;r.w=0;return true}[tx,ty]=r.path[r.wp];dx=tx-r.ex;dy=ty-r.ey;d=Math.hypot(dx,dy)}
+  const err=wrap(Math.atan2(dy,dx)-r.eth);let w=clamp(3.2*err,-2.5,2.5),v=VMAX*Math.max(0,Math.cos(err))**3;
+  if(r.wp==r.path.length-1)v=Math.min(v,.12+d*.8);
+  if(r.hold){v=0;w=0}
+  if(r.sonar<.08&&v>0){v=0;r.safety=true}
+  for(const o of S.robots)if(o!==r&&Math.hypot(o.x-r.x,o.y-r.y)<.4&&ahead(r,o,.2)&&v>0){v=0;r.safety=true}
+  r.v=v;r.w=w;move(r,v,w,dt);return false}
+
+function addMsg(r,mid,lb,x,y){if(r.msgs.has(mid))return false;r.msgs.set(mid,{id:mid,lb,x,y,by:r.name,t:S.t,path:[r.name]});return true}
+function task(r,arrived,dt){
+  if(MAPS[S.m].mis){if(arrived&&r.state==='go'){r.state='scan';r.scanT=1.5;r.path=null;r.task='Bước '+r.step+'/'+r.total+': '+(S.m==4&&r.cur!=='K'?'giao thuốc ở ':'quét ở ')+r.cur;
+      if(S.m==4&&r.cur!=='K'){S.delivered++;addMsg(r,'G'+r.name+r.step,'Đã giao thuốc '+r.cur+' ('+r.name+')',r.x,r.y);sys(r.name+' giao thuốc xong ở '+r.cur)}}}
+  else if(S.m==2){if(arrived){r.pause=(r.pause||0)+dt;r.task='Bốc/dỡ hàng';if(r.pause>1.2){r.pause=0;const g=r.goals[r.gi];r.gi=(r.gi+1)%2;r.task=(r.gi?'Tới lối kệ lấy hàng':'Mang hàng ra bến');plan(r,...g)}}else if(!r.path&&!r.goal){const g=r.goals[0];r.gi=1;r.task='Tới lối kệ lấy hàng';plan(r,...g)}}
+  else if(S.m==3){
+    if(r.state==='wait'&&S.t>=r.delay){r.state='go';r.task='Vào tòa nhà, tới T';plan(r,...S.pts.T)}
+    if(arrived&&r.state==='go'){r.state='return';r.task='Đã tới T, quay về gửi dữ liệu';plan(r,S.tail.x+.5,S.tail.y)}
+    else if(r.state==='return'&&(rssi(r,S.tail)>-76||arrived)){r.state='done';r.path=null;r.task='Đã nối lại sóng, dừng';sys(r.name+' nối lại sóng với '+S.tail.name+', gửi dữ liệu đã lưu')}}}
+function chain(){const mv=S.robots.filter(r=>r.state==='go');if(!mv.length)return;const lead=mv[0];
+  for(const r of mv.slice(1)){const q=rssi(r,S.tail);if(q<-78){r.state='relay';r.path=null;r.v=0;r.task='Trạm tiếp sóng (nối '+S.tail.name+')';sys(r.name+' dừng làm trạm tiếp sóng: sóng tới '+S.tail.name+' còn '+Math.round(q)+' dBm');S.tail=r;break}}
+  lead.dtn=mv.length==1&&rssi(lead,S.tail)<-85}
+function detect(){for(const p of S.persons)for(const r of S.robots){if(r.msgs.has(p.id))continue;if(Math.hypot(p.x-r.x,p.y-r.y)<2.2&&losRaw(r.x,r.y,p.x,p.y)){addMsg(r,p.id,p.lb,p.x,p.y);if(!p.seen)sys(r.name+' phát hiện '+p.lb+' '+p.id);p.seen=true}}}
+function gossip(){const nodes=[S.base,...S.robots];S.links=[];const add=[];
+  for(let a=0;a<nodes.length;a++)for(let b=a+1;b<nodes.length;b++){const q=rssi(nodes[a],nodes[b]);if(q<-85)continue;S.links.push([nodes[a],nodes[b],q]);
+    for(const[x,y]of[[nodes[a],nodes[b]],[nodes[b],nodes[a]]])for(const m of x.msgs.values())if(!y.msgs.has(m.id))add.push([y,{...m,path:[...m.path,y.name]}])}
+  for(const[y,m]of add){if(y.msgs.has(m.id))continue;y.msgs.set(m.id,m);if(y.base)S.log.unshift({t:S.t,m})}}
+
+function lidar(r){const out=[];for(let k=0;k<NR;k++){const a=r.th+k*2*Math.PI/NR,c=Math.cos(a),q=Math.sin(a);let d=.12;for(;d<LMAX;d+=.04){if(grid[cellOf(r.x+d*c,r.y+d*q)])break}out.push(d>=LMAX?LMAX:d+.01*randn())}return out}
+function score(sc,x,y,th){let n=0;for(let k=0;k<NR;k++){const d=sc[k];if(d>=LMAX-.1)continue;const a=th+k*2*Math.PI/NR;if(near[cellOf(x+d*Math.cos(a),y+d*Math.sin(a))])n++}return n}
+function localize(r){const sc=r.scan;let bx=r.ex,by=r.ey,bt=r.eth,bs=score(sc,bx,by,bt);
+  for(let t=-.1;t<=.1001;t+=.025){const v=score(sc,bx,by,r.eth+t);if(v>bs){bs=v;bt=r.eth+t}}
+  const t0=bt;for(let dx=-.12;dx<=.1201;dx+=.03)for(let dy=-.12;dy<=.1201;dy+=.03){const v=score(sc,r.ex+dx,r.ey+dy,t0);if(v>bs){bs=v;bx=r.ex+dx;by=r.ey+dy}}
+  for(let t=-.02;t<=.0201;t+=.01){const v=score(sc,bx,by,t0+t);if(v>bs){bs=v;bt=t0+t}}
+  const hits=sc.filter(d=>d<LMAX-.1).length;r.lidOk=hits>10&&bs>.6*hits;
+  if(r.lidOk){r.ex+=.6*(bx-r.ex);r.ey+=.6*(by-r.ey);r.eth=wrap(r.eth+.6*wrap(bt-r.eth))}}
+function markM(x,y,v){if(x<0||y<0||x>=W||y>=H)return;const i=cellOf(x,y);if(mapS[i]===v||(mapS[i]===2&&v===1))return;if(!mapS[i])S.seen++;mapS[i]=v;paintM(i)}
+function paintM(i){const g=mapC.getContext('2d');g.fillStyle=mapS[i]===2?'#13315C':'#dbe7fb';g.fillRect((i%GW)*C*sc,((i/GW)|0)*C*sc,C*sc+.6,C*sc+.6)}
+function mapScan(r){const sc=r.scan;for(let k=0;k<NR;k++){const d=sc[k],a=r.eth+k*2*Math.PI/NR,c=Math.cos(a),q=Math.sin(a);for(let t=.15;t<d-.08;t+=.1)markM(r.ex+t*c,r.ey+t*q,1);if(d<LMAX-.1)markM(r.ex+d*c,r.ey+d*q,2)}}
+function uwb(r){const anc=[S.base,...S.robots.filter(o=>o!==r&&(o.state==='relay'||o.state==='done'))].filter(a=>Math.hypot(a.x-r.x,a.y-r.y)<30);r.anchors=anc;
+  for(let it=0;it<3;it++){let gx=0,gy=0;for(const a of anc){const ax=a.base?a.x:a.ex,ay=a.base?a.y:a.ey,m=Math.hypot(a.x-r.x,a.y-r.y)+.05*randn(),e=Math.hypot(r.ex-ax,r.ey-ay)||1e-3,res=e-m;gx+=res*(r.ex-ax)/e;gy+=res*(r.ey-ay)/e}
+    if(anc.length){r.ex-=.3*gx/anc.length;r.ey-=.3*gy/anc.length}}}
+function sense(){for(const r of S.robots){if(S.sens.lid){if(!(r.v===0&&r.w===0&&r.scan)){r.scan=lidar(r);localize(r);mapScan(r)}}else{r.scan=null;r.lidOk=false}if(S.sens.uwb)uwb(r);else r.anchors=[];r.err=Math.hypot(r.ex-r.x,r.ey-r.y)}}
+
+function step(){S.t+=DT;const ck=k=>$(k).checked;S.sens={imu:ck('imu'),lid:ck('lid'),uwb:ck('uwb')};S.locT+=DT;if(S.locT>=.25){S.locT=0;sense()}
+  for(const r of S.robots)coordinate(r,DT);for(const r of S.robots){const a=drive(r,DT);task(r,a,DT)}
+  detect();S.gossipT+=DT;if(S.gossipT>=.5){S.gossipT=0;gossip();if(S.m==3)chain()}}
+
+/* ---------- vẽ ---------- */
+const FLOOR={wood:['#f4e9da','#ead9c2'],tile:['#eef3f7','#dde6ee'],carpet:['#f1edf6','#e6dff0'],hall:['#f6f7f9','#e9ecf1'],ware:['#eef0f2','#e2e5e9'],conc:['#eceae6','#dedbd4'],care:['#eef6f4','#ddece8']};
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function resize(){dpr=window.devicePixelRatio||1;const w=cv.clientWidth||700;cv.style.height=(w*H/W)+'px';cv.width=Math.round(w*dpr);cv.height=Math.round(w*H/W*dpr);sc=cv.width/W;
+  for(const c of [bgC,mapC]){c.width=cv.width;c.height=cv.height}
+  const g=bgC.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,cv.width,cv.height);
+  for(const R of S.rooms){const[f,l]=FLOOR[R.floor];g.fillStyle=f;g.fillRect(R.x0*sc,R.y0*sc,(R.x1-R.x0)*sc,(R.y1-R.y0)*sc);g.strokeStyle=l;g.lineWidth=1;
+    if(R.floor==='wood'){for(let y=R.y0;y<R.y1;y+=.25){g.beginPath();g.moveTo(R.x0*sc,y*sc);g.lineTo(R.x1*sc,y*sc);g.stroke()}}
+    else if(R.floor==='tile'||R.floor==='care'){for(let x=R.x0;x<=R.x1;x+=.5){g.beginPath();g.moveTo(x*sc,R.y0*sc);g.lineTo(x*sc,R.y1*sc);g.stroke()}for(let y=R.y0;y<=R.y1;y+=.5){g.beginPath();g.moveTo(R.x0*sc,y*sc);g.lineTo(R.x1*sc,y*sc);g.stroke()}}
+    else if(R.floor==='ware'){g.strokeStyle='#e8c84a';g.lineWidth=Math.max(1,.04*sc);g.setLineDash([.3*sc,.2*sc]);g.strokeRect(2.6*sc,.8*sc,9.2*sc,8.4*sc);g.setLineDash([])}}
+  for(const z of S.zones){g.fillStyle='rgba(232,200,74,.22)';g.fillRect(z.x0*sc,z.y0*sc,(z.x1-z.x0)*sc,(z.y1-z.y0)*sc)}
+  for(const F of S.furn){g.fillStyle='rgba(11,37,69,.12)';rr(g,(F.x0+.05)*sc,(F.y0+.07)*sc,(F.x1-F.x0)*sc,(F.y1-F.y0)*sc,.08*sc);g.fill();g.fillStyle=F.col;rr(g,F.x0*sc,F.y0*sc,(F.x1-F.x0)*sc,(F.y1-F.y0)*sc,.08*sc);g.fill();g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=1;g.stroke()}
+  for(let cy=0;cy<GH;cy++)for(let cx=0;cx<GW;cx++){const v=grid[id(cx,cy)];if(v===1||v===2){g.fillStyle=v==2?'#5f6574':'#7d8596';g.fillRect(cx*C*sc,cy*C*sc,C*sc+.6,C*sc+.6)}}
+  const fs=Math.max(11*dpr,.26*sc);g.font='600 '+fs+'px "Be Vietnam Pro",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillStyle='rgba(11,37,69,.42)';
+  for(const R of S.rooms){if(R.name==='Kho hàng'||R.name==='Khu bê tông')continue;g.fillText(R.name,(R.x0+R.x1)/2*sc,(R.floor==='hall'?(R.y0+R.y1)/2:R.y0+(R.y1-R.y0)*.5)*sc+(R.floor==='hall'?0:fs*1.6))}
+  for(let i=0;i<GW*GH;i++)if(mapS[i])paintM(i);draw()}
+function drawRobot(r,R,sel){const x=r.x*sc,y=r.y*sc;ctx.save();ctx.translate(x,y);ctx.rotate(r.th);
+  const L=R*2.2,Wd=R*1.8;ctx.fillStyle='rgba(11,37,69,.18)';rr(ctx,-L/2+2*dpr,-Wd/2+3*dpr,L,Wd,R*.4);ctx.fill();
+  ctx.fillStyle='#1c2333';ctx.fillRect(-L*.28,-Wd/2-R*.28,L*.42,R*.32);ctx.fillRect(-L*.28,Wd/2-R*.04,L*.42,R*.32);
+  ctx.fillStyle=r.state==='relay'?'#fff':r.color;ctx.strokeStyle=r.color;ctx.lineWidth=2*dpr;rr(ctx,-L/2,-Wd/2,L,Wd,R*.4);ctx.fill();ctx.stroke();
+  ctx.fillStyle=r.state==='relay'?r.color:'#fff';ctx.beginPath();ctx.arc(-L*.08,0,R*.42,0,7);ctx.fill();
+  ctx.fillStyle='#ffd84a';ctx.fillRect(L/2-R*.3,-Wd*.32,R*.22,R*.3);ctx.fillRect(L/2-R*.3,Wd*.32-R*.3,R*.22,R*.3);ctx.restore();
+  if(sel){ctx.strokeStyle=r.color;ctx.lineWidth=1.5*dpr;ctx.setLineDash([3*dpr,3*dpr]);ctx.beginPath();ctx.arc(x,y,R*2.3,0,7);ctx.stroke();ctx.setLineDash([])}
+  const fs=Math.max(11*dpr,.24*sc);ctx.font='700 '+fs+'px "Be Vietnam Pro",sans-serif';const tw=ctx.measureText(r.name).width+10*dpr;
+  ctx.fillStyle='#fff';rr(ctx,x-tw/2,y-R*2-fs*1.25,tw,fs*1.3,fs*.65);ctx.fill();ctx.strokeStyle=r.color;ctx.lineWidth=1.2*dpr;ctx.stroke();ctx.fillStyle=r.color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(r.name+((r.hold||r.safety)?' ⏸':''),x,y-R*2-fs*.6)}
+function draw(){ctx.drawImage(bgC,0,0);if($('ovl').checked){ctx.fillStyle='rgba(255,255,255,.78)';ctx.fillRect(0,0,cv.width,cv.height);ctx.drawImage(mapC,0,0)}
+  const R=Math.max(5*dpr,.15*sc),fs=Math.max(11*dpr,.26*sc);ctx.textAlign='center';ctx.textBaseline='middle';
+  for(const z of S.zones)if(z.lock!=null){ctx.strokeStyle=S.robots[z.lock].color;ctx.lineWidth=2*dpr;ctx.strokeRect(z.x0*sc,z.y0*sc,(z.x1-z.x0)*sc,(z.y1-z.y0)*sc)}
+  for(const[k,p]of Object.entries(S.pts)){ctx.fillStyle='rgba(31,78,140,.12)';ctx.beginPath();ctx.arc(p[0]*sc,p[1]*sc,fs*1.05,0,7);ctx.fill();ctx.strokeStyle='rgba(31,78,140,.5)';ctx.lineWidth=1*dpr;ctx.stroke();ctx.fillStyle='#13315C';ctx.font='700 '+fs*.85+'px "Be Vietnam Pro",sans-serif';ctx.fillText(k,p[0]*sc,p[1]*sc)}
+  if($('rng').checked)for(const[a,b,q]of S.links){ctx.strokeStyle=q>-70?'#1d8a4f':q>-80?'#d08a00':'#D62839';ctx.lineWidth=Math.max(1.5,2*dpr);ctx.setLineDash([6*dpr,4*dpr]);ctx.beginPath();ctx.moveTo(a.x*sc,a.y*sc);ctx.lineTo(b.x*sc,b.y*sc);ctx.stroke()}
+  ctx.setLineDash([]);
+  for(const p of S.persons){const x=p.x*sc,y=p.y*sc,s=Math.max(4*dpr,.1*sc);ctx.fillStyle=p.seen?'#D62839':'#e8892c';ctx.beginPath();ctx.arc(x,y-s*1.1,s*.7,0,7);ctx.fill();rr(ctx,x-s*.8,y-s*.3,s*1.6,s*1.6,s*.6);ctx.fill();if(p.seen){ctx.strokeStyle='#D62839';ctx.lineWidth=1.5*dpr;ctx.beginPath();ctx.arc(x,y,s*2.4,0,7);ctx.stroke()}}
+  const b=S.base,bs=Math.max(7*dpr,.22*sc);ctx.fillStyle='#13315C';rr(ctx,b.x*sc-bs,b.y*sc-bs,2*bs,2*bs,bs*.35);ctx.fill();ctx.fillStyle='#fff';ctx.font='700 '+bs*1.1+'px sans-serif';ctx.fillText('T',b.x*sc,b.y*sc+1);
+  const sr=S.robots[S.sel];
+  for(const r of S.robots){if(r.path&&r.wp<r.path.length){ctx.strokeStyle=r.color;ctx.globalAlpha=r===sr?.75:.35;ctx.lineWidth=(r===sr?2:1.5)*dpr;ctx.setLineDash([4*dpr,4*dpr]);ctx.beginPath();ctx.moveTo(r.ex*sc,r.ey*sc);for(let k=r.wp;k<r.path.length;k++)ctx.lineTo(r.path[k][0]*sc,r.path[k][1]*sc);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1}}
+  if(sr){if(sr.scan){ctx.strokeStyle='rgba(214,40,57,.12)';ctx.lineWidth=1;sr.scan.forEach((d,k)=>{if(k%2)return;const a=sr.th+k*2*Math.PI/NR;ctx.beginPath();ctx.moveTo(sr.x*sc,sr.y*sc);ctx.lineTo((sr.x+d*Math.cos(a))*sc,(sr.y+d*Math.sin(a))*sc);ctx.stroke()});ctx.fillStyle='#D62839';sr.scan.forEach((d,k)=>{if(d>=LMAX-.1)return;const a=sr.th+k*2*Math.PI/NR;ctx.fillRect((sr.x+d*Math.cos(a))*sc-1.5*dpr,(sr.y+d*Math.sin(a))*sc-1.5*dpr,3*dpr,3*dpr)})}
+    ctx.strokeStyle='#8A4FC9';ctx.lineWidth=1.2*dpr;ctx.setLineDash([2*dpr,5*dpr]);for(const a of sr.anchors){ctx.beginPath();ctx.moveTo(sr.x*sc,sr.y*sc);ctx.lineTo(a.x*sc,a.y*sc);ctx.stroke()}ctx.setLineDash([])}
+  for(const r of S.robots){if(r.err<.04)continue;ctx.strokeStyle=r.color;ctx.lineWidth=1.5*dpr;ctx.setLineDash([4*dpr,3*dpr]);ctx.beginPath();ctx.arc(r.ex*sc,r.ey*sc,R*1.2,0,7);ctx.stroke();ctx.beginPath();ctx.moveTo(r.ex*sc,r.ey*sc);ctx.lineTo(r.x*sc,r.y*sc);ctx.stroke();ctx.setLineDash([])}
+  S.robots.forEach((r,k)=>drawRobot(r,R,k===S.sel))}
+
+/* ---------- 9 lớp ---------- */
+const LAYERS=[
+ ['1. Giao tiếp người','Nhận lệnh giọng nói hoặc chữ, đổi thành ý định.','"Đi B, C rồi về" → [B, C, S]'],
+ ['2. Nhiệm vụ','Máy trạng thái nối các bước đi, làm, báo.','Tới P1 → giao thuốc → tới P3 → giao → về K'],
+ ['3. Bản đồ chung','Lidar của cả bầy cùng vẽ một bản đồ, cộng mọi thứ cả bầy đã thấy.','R2 vẽ phòng ngủ và thấy người ngã, R1 cũng biết qua mạng'],
+ ['4. Định vị','Encoder và IMU đoán vị trí (sai số cộng dồn); lidar so tường với bản đồ để sửa; UWB đo khoảng cách tới trạm và robot đứng yên để sửa thêm.','Encoder báo đi 1,0 m nhưng bánh trượt; lidar thấy thực tế 0,9 m nên sửa lại'],
+ ['5. Tìm đường A*','Vạch đường né tường và đồ đạc, chia thành các mốc tối đa 1 m.','S → cửa bếp → giữa bếp'],
+ ['6. Phối hợp bầy','Đặt chỗ lối hẹp, nhường đường, dừng làm trạm tiếp sóng.','R3 chờ R1 ra khỏi lối kệ 2'],
+ ['7. Lái và lớp an toàn','Bám mốc (sau này dùng bộ não PPO); dừng khi vật cách dưới 8 cm.','v = 0,4 m/s, ω = 0,3 rad/s'],
+ ['8. Liên lạc mesh','ESP-NOW/LoRa: phát cho tất cả, bắc cầu, đồng bộ tin kiểu lan truyền, giữ và chuyển khi mất sóng.','Tin đi R4 → R3 → R2 → Trạm'],
+ ['9. Phần cứng','Pi 4, 2 động cơ có encoder, MPU6050, lidar LD06, UWB DW3000, siêu âm, camera, ESP32 + LoRa.','Lidar 72 tia: 60 tia chạm vật; UWB thấy 2 mốc']];
+function vals(r){if(!r)return LAYERS.map(()=>['—',0]);const nb=S.links.filter(l=>l[0]===r||l[1]===r),best=nb.length?Math.max(...nb.map(l=>l[2])):null,rem=r.path?r.path.length-r.wp:0,g=r.goal;
+  return[[S.cmd||'—',0],[r.task,0],['Bầy đã vẽ '+Math.min(100,Math.round(100*S.seen/S.tot))+'% sân · '+r.name+' biết '+r.msgs.size+' tin',0],
+   ['Ước lượng ('+f1(r.ex)+'; '+f1(r.ey)+') m · sai '+f2(r.err)+' m · '+['encoder',S.sens.imu?'IMU':'',r.lidOk?'lidar':'',r.anchors.length?'UWB':''].filter(Boolean).join(' + '),r.err>.25],
+   [rem?'Còn '+rem+' mốc'+(g?', đích ('+f1(g[0])+'; '+f1(g[1])+')':''):'Không có đường đang chạy',0],
+   [r.coord||(r.state==='relay'?'Đứng yên làm trạm tiếp sóng':r.dtn?'Mất sóng, lưu dữ liệu để gửi sau':'Không xung đột'),r.hold||r.state==='relay'||r.dtn],
+   ['v = '+f2(r.v)+' m/s; ω = '+f1(r.w)+' rad/s'+(r.safety?' · AN TOÀN: DỪNG':''),r.safety],
+   [nb.length?nb.length+' liên kết; tốt nhất '+Math.round(best)+' dBm':'Mất sóng, đang lưu '+r.msgs.size+' tin',!nb.length],
+   ['Lidar: '+(r.scan?r.scan.filter(d=>d<LMAX-.1).length+'/'+NR+' tia chạm vật':'tắt')+' · UWB: '+r.anchors.length+' mốc · siêu âm '+(r.sonar>=2.95?'> 3':f2(r.sonar))+' m',r.sonar<.2]]}
+function renderLayers(){$('layers').innerHTML=LAYERS.map((l,k)=>'<details class="layer"><summary><span class="nm">'+esc(l[0])+'</span><span class="val" id="lv'+k+'">—</span></summary><div class="ex">'+esc(l[1])+'<br>Ví dụ: '+esc(l[2])+'</div></details>').join('')}
+function renderChips(){$('chips').innerHTML=S.robots.map((r,k)=>'<button class="chip" data-k="'+k+'" aria-pressed="'+(k===S.sel)+'" style="border-color:'+r.color+';'+(k===S.sel?'background:'+r.color+';color:#fff':'color:'+r.color)+'">'+r.name+'</button>').join('')}
+function ui(){vals(S.robots[S.sel]).forEach((x,k)=>{const e=$('lv'+k);if(e){e.textContent=x[0];e.classList.toggle('hot',!!x[1])}});
+  const me=S.robots.reduce((a,r)=>a+r.err,0)/Math.max(1,S.robots.length),recv=[...S.base.msgs.values()].length;
+  const k=[[f1(S.t)+' s','Thời gian'],[recv+(S.m==4?'':'/'+S.persons.length),S.m==4?'Tin về quầy trực':'Phát hiện về trạm'],[f2(me)+' m','Sai số định vị TB'],[S.bumps,'Lần chạm vật']];
+  $('kpi').innerHTML=k.map(x=>'<div><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span></div>').join('');
+  $('log').innerHTML=S.log.slice(0,40).map(e=>e.sys?'<div class="sys">'+f1(e.t)+' s · '+esc(e.txt)+'</div>':'<div class="msg"><b>'+esc((e.m.id[0]==='#'?e.m.id+' ':'')+e.m.lb)+'</b> · đường đi: '+esc(e.m.path.join(' → '))+' · trễ '+f1(e.t-e.m.t)+' s</div>').join('')||'<div class="sys">Chưa có tin.</div>'}
+
+let lastUi=0;
+function loop(ts){if(S.run){const n=+$('spd').value;for(let k=0;k<n;k++)step()}draw();if(ts-lastUi>200){lastUi=ts;ui()}requestAnimationFrame(loop)}
+function setRun(v){S.run=v;$('run').textContent=v?'❚❚ Tạm dừng':'▶ Chạy'}
+$('run').addEventListener('click',()=>setRun(!S.run));
+$('reset').addEventListener('click',()=>{const r=S.run;build(S.m);setRun(r)});
+document.querySelectorAll('.mapb').forEach(b=>b.addEventListener('click',()=>{build(+b.dataset.m);setRun(false);try{location.hash='map'+b.dataset.m}catch(e){}}));
+$('go1').addEventListener('click',()=>{build(S.m);setRun(true)});
+$('cnt').addEventListener('change',()=>{S.n=+$('cnt').value;build(S.m)});
+$('chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;S.sel=+b.dataset.k;renderChips();ui()});
+cv.addEventListener('click',e=>{const rc=cv.getBoundingClientRect(),x=(e.clientX-rc.left)/rc.width*W,y=(e.clientY-rc.top)/rc.height*H;let bk=-1,bd=.8;S.robots.forEach((r,k)=>{const d=Math.hypot(r.x-x,r.y-y);if(d<bd){bd=d;bk=k}});if(bk>=0){S.sel=bk;renderChips();ui()}});
+['ovl','rng'].forEach(k=>$(k).addEventListener('change',draw));
+const ro=new ResizeObserver(()=>resize());ro.observe(cv);
+const hm=/^#map([1-4])$/.exec(location.hash);
+globalThis.BayLab={build,step,get S(){return S},rssi};
+build(hm?+hm[1]:1);requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
