@@ -2,6 +2,7 @@
  * Hai chế độ: Nhà thông minh (ra lệnh) và Sân huấn luyện 5 cấp. */
 {
   const C = window.RobotCore, H = window.RobotHouse, RM = window.RobotModels;
+  try { H.use(localStorage.getItem("rlab.hmap") || "nha3"); } catch (e) { H.use("nha3"); }
   const $ = id => document.getElementById(id);
   const fmt = (x, d = 2) => (Number.isFinite(x) ? x.toFixed(d).replace(".", ",") : "–");
   const esc = s => String(s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
@@ -27,8 +28,8 @@
     customFn: null, keys: { up: 0, down: 0, left: 0, right: 0 },
     playing: false, speed: 2, acc: 0, view: "3d", tool: "none",
     stats: { ep: 0, dich: 0, vacham: 0, hetgio: 0 }, lastBench: null, robots: {},
-    hStart: store.get("hStart", { x: -1.4, y: -1.0, yaw: 0 }), nav: new H.Navigator(), logShown: -1, cmdAt: 0,
-    layout: store.get("layout", null), movers: store.get("movers", ["nguoi_khach"]), moveSel: null,
+    hStart: store.get("hStart_" + H.KEY, H.START), nav: new H.Navigator(), logShown: -1, cmdAt: 0,
+    layout: store.get("layout_" + H.KEY, null), movers: store.get("movers", ["nguoi_khach"]), moveSel: null,
     tabs: store.get("tabs", {}), sideOpen: false, labels: store.get("labels", true),
   };
   let sim = new C.Sim(S.cfg), scenario = null;
@@ -133,6 +134,7 @@
   function rrect(x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
   const FACE_A = { ny: 0, py: Math.PI, px: -Math.PI / 2, nx: Math.PI / 2 };
   const ROOM_LABEL = { khach: [-2.3, -2.75], bep: [3.4, 0.22], ngu: [2.25, -0.25] };
+  const ROOM_LABEL5 = { khach: [-3.6, -4.6], bep: [1.6, 2.35], ngu: [2.2, 0.55], tam: [5.7, -1.15], ngu2: [1.7, -2.2] };
 
   function drawFurniture2d(o, hl) {
     const px = sl(1);
@@ -191,7 +193,7 @@
     if (house) {
       for (const [k, R] of Object.entries(H.ROOMS)) {
         const [a, b, c, d] = R.rect; g.fillStyle = pattern(R.floor); g.fillRect(sx(a), sy(d), sl(b - a), sl(d - c));
-        const lp = ROOM_LABEL[k]; label(R.name.toUpperCase(), sx(lp[0]), sy(lp[1]), Math.max(10, px * 0.12), COL.navy2, "rgba(255,255,255,.7)");
+        const lp = (H.KEY === "nha3" ? ROOM_LABEL[k] : ROOM_LABEL5[k]) || [(a + b) / 2, d - 0.35]; label(R.name.toUpperCase(), sx(lp[0]), sy(lp[1]), Math.max(10, px * 0.12), COL.navy2, "rgba(255,255,255,.7)");
       }
       for (const r of H.DECOR) { g.fillStyle = r.color; rrect(sx(r.x - r.w / 2), sy(r.y + r.d / 2), sl(r.w), sl(r.d), sl(0.06)); g.fill(); }
     } else {
@@ -319,6 +321,7 @@
       if (staticGroup) scene.remove(staticGroup);
       staticGroup = new THREE.Group(); objs = [];
       const B = sim.bounds, house = !!sim.sc?.house;
+      if (sun) { const e = Math.max(6, (B.x1 - B.x0) / 2 + 1, (B.y1 - B.y0) / 2 + 1); Object.assign(sun.shadow.camera, { left: -e, right: e, top: e, bottom: -e, far: 40 }); sun.position.set(-3 * e / 6, 8 * e / 6, 4 * e / 6); sun.shadow.camera.updateProjectionMatrix(); }
       if (house) {
         for (const R of Object.values(H.ROOMS)) {
           const [a, b, c, d] = R.rect, t = RM.floorTex[R.floor]();
@@ -405,7 +408,7 @@
       cam.fov = v === "3dfpv" ? 2 * sim.cfg.cam_fov_half * 180 / Math.PI * 0.85 : 50; cam.updateProjectionMatrix();
       if (v === "3d") {
         const house = !!sim.sc?.house;
-        if (house) { cam.position.set(0.3, 6.6, 6.0); controls && controls.target.set(0, 0, 0.45); }
+        if (house) { const k = Math.max((sim.bounds.x1 - sim.bounds.x0) / 8, (sim.bounds.y1 - sim.bounds.y0) / 6); cam.position.set(0.3 * k, 6.6 * k, 6.0 * k); controls && controls.target.set(0, 0, 0.45); }
         else { cam.position.set(0, 5.2, 4.2); controls && controls.target.set(0, 0, 0); }
       }
       return true;
@@ -452,11 +455,12 @@
   // ======================================================== BẢNG NHÀ
   const ICON = { sofa: "🛋️", ban_tra: "☕", tivi: "📺", ghe_banh: "🪑", ke_sach: "📚", cay_khach: "🪴", tu_lanh: "🧊", bon_rua: "🚰", bep_nau: "🔥",
     ban_an: "🍽️", giuong: "🛏️", tu_quan_ao: "🚪", ban_lam_viec: "💻", cay_ngu: "🪴" };
-  const ROOM_ICON = { khach: "🛋️", bep: "🍳", ngu: "😴" };
+  const ROOM_ICON = { khach: "🛋️", bep: "🍳", ngu: "😴", tam: "🛁", ngu2: "🛌" };
+  Object.assign(ICON, { lavabo: "🚰", ke_khan: "🧺", giuong2: "🛏️", ban_hoc: "📖", tu_ngu2: "🚪" });
   function buildChips() {                               // đồ vật xếp theo phòng: [nút vào phòng] + lưới icon
     $("hsChips").innerHTML = Object.entries(H.ROOMS).map(([rk, R]) => {
       const objs = H.FURNITURE.filter(f => f.room === rk && f.label && f.model !== "chair");
-      return `<div class="roomrow"><button class="rbtn" data-c="vào ${esc(R.name.toLowerCase())}" title="Vào ${esc(R.name)}"><span class="i">${ROOM_ICON[rk]}</span>${{ khach: "Khách", bep: "Bếp", ngu: "Ngủ" }[rk]}</button>
+      return `<div class="roomrow"><button class="rbtn" data-c="vào ${esc(R.name.toLowerCase())}" title="Vào ${esc(R.name)}"><span class="i">${ROOM_ICON[rk]}</span>${{ khach: "Khách", bep: "Bếp", ngu: "Ngủ", tam: "Tắm", ngu2: "Ngủ 2" }[rk]}</button>
         <div class="icons">${objs.map(f => `<button class="obj" data-c="tới ${esc(f.label.toLowerCase())}${f.id === "cay_ngu" ? " phòng ngủ" : f.id === "cay_khach" ? " phòng khách" : ""}" title="Tới ${esc(f.label)}"><span class="i">${ICON[f.id] || "📦"}</span><span class="t">${esc(f.label)}</span></button>`).join("")}</div></div>`;
     }).join("");
   }
@@ -530,7 +534,7 @@
   function randomStart() {
     const sc = H.buildScenario(), t = new C.Sim();
     for (let i = 0; i < 300; i++) {
-      const x = -3.7 + Math.random() * 7.4, y = -2.7 + Math.random() * 5.4;
+      const B = H.BOUNDS, x = B.x0 + 0.3 + Math.random() * (B.x1 - B.x0 - 0.6), y = B.y0 + 0.3 + Math.random() * (B.y1 - B.y0 - 0.6);
       if (!H.roomAt(x, y)) continue;
       sc.start = { x, y, yaw: Math.random() * 6.28 - 3.14 }; t.load(sc, { endOnGoal: false });
       const free = t.allObstacles().every(o => {
@@ -540,7 +544,7 @@
       });
       if (free) return sc.start;
     }
-    return { x: -1.4, y: -1.0, yaw: 0 };
+    return Object.assign({}, H.START);
   }
 
   // ======================================================== BẢNG SÂN HUẤN LUYỆN
@@ -656,7 +660,7 @@
     if (isHouse()) {
       if (!H.roomAt(x, y)) return;
       if (S.tool === "place") {
-        S.hStart = { x, y, yaw: S.hStart.yaw || 0 }; store.set("hStart", S.hStart);
+        S.hStart = { x, y, yaw: S.hStart.yaw || 0 }; store.set("hStart_" + H.KEY, S.hStart);
         S.tool = "none"; $("hsPlace").classList.remove("on"); buildHouse(); restart(true); return;
       }
       if (S.tool === "move1") {
@@ -672,7 +676,7 @@
         const clash = sim.allObstacles().some(q => q !== o && q.kind !== "mover" &&
           Math.max(Math.abs(q.x - x) - (q.hx ?? q.r) - box.hx, Math.abs(q.y - y) - (q.hy ?? q.r) - box.hy) < 0.03);
         if (clash) { toast("Chỗ đó bị vướng tường hoặc đồ khác, chạm chỗ trống hơn."); return; }
-        S.layout = Object.assign({}, S.layout || {}, { [o.id]: n }); store.set("layout", S.layout);
+        S.layout = Object.assign({}, S.layout || {}, { [o.id]: n }); store.set("layout_" + H.KEY, S.layout);
         toast(`Đã dời ${o.label} sang ${H.ROOMS[n.room].name.toLowerCase()}. Robot chưa biết – thử ra lệnh xem!`);
         S.tool = "none"; S.moveSel = null; $("hsMove").classList.remove("on"); buildHouse(); restart(true); return;
       }
@@ -798,7 +802,7 @@
     $("btnPlay").onclick = () => setPlaying(!S.playing);
     $("btnStep").onclick = () => { setPlaying(false); stepOnce(); updatePanel(); updateHouse(); render(); };
     $("btnReset").onclick = () => { setPlaying(false); if (isHouse()) buildHouse(); restart(); };
-    $("btnNew").onclick = () => { if (isHouse()) { S.hStart = randomStart(); store.set("hStart", S.hStart); setPlaying(false); buildHouse(); restart(); } else newScenario(S.seed + 1); };
+    $("btnNew").onclick = () => { if (isHouse()) { S.hStart = randomStart(); store.set("hStart_" + H.KEY, S.hStart); setPlaying(false); buildHouse(); restart(); } else newScenario(S.seed + 1); };
     $("selSpeed").value = String(S.speed);
     $("selSpeed").onchange = e => { S.speed = +e.target.value; };
     $("v2d").onclick = () => setViewMode("2d"); $("v3d").onclick = () => setViewMode("3d");
@@ -824,7 +828,7 @@
       $(el).onchange = () => { S.movers = MV.filter(([e]) => $(e).checked).map(([, kk]) => kk); store.set("movers", S.movers); setPlaying(false); buildHouse(); restart(true); };
     }
     $("hsShuffle").onclick = () => {
-      S.layout = H.shuffleLayout(1 + Math.floor(Math.random() * 1e6), S.hStart); store.set("layout", S.layout);
+      S.layout = H.shuffleLayout(1 + Math.floor(Math.random() * 1e6), S.hStart); store.set("layout_" + H.KEY, S.layout);
       setPlaying(false); buildHouse(); restart(true);
       const moved = Object.keys(S.layout).filter(id => S.layout[id].room !== H.FURNITURE.find(f => f.id === id).room).length;
       toast(`Đã xáo trộn ${Object.keys(S.layout).length} món (${moved} món sang phòng khác). Robot chưa biết – thử ra lệnh!`);
@@ -833,7 +837,16 @@
       S.tool = S.tool.startsWith("move") ? "none" : "move1"; $("hsMove").classList.toggle("on", S.tool !== "none");
       toast(S.tool === "move1" ? "Chạm vào món đồ muốn dời (trên mặt bằng hoặc 3D)." : "");
     };
-    $("hsRestore").onclick = () => { S.layout = null; store.set("layout", null); setPlaying(false); buildHouse(); restart(true); toast("Đồ đạc đã về chỗ cũ."); };
+    $("hsMap").value = H.KEY;
+    $("hsMap").onchange = () => {
+      H.use($("hsMap").value); try { localStorage.setItem("rlab.hmap", H.KEY); } catch (e) { }
+      S.layout = store.get("layout_" + H.KEY, null); S.hStart = store.get("hStart_" + H.KEY, H.START);
+      if (!H.roomAt(S.hStart.x, S.hStart.y)) S.hStart = Object.assign({}, H.START);
+      S.nav = new H.Navigator(); S.logShown = -1; setPlaying(false); buildChips(); buildHouse(); restart();
+      if (S.view === "3d") three.setMode("3d");
+      toast(`Đã chuyển sang ${H.MAPS[H.KEY].name}. Thử lệnh: “${H.KEY === "nha5" ? "vào phòng tắm" : "đi tới tủ lạnh"}”.`);
+    };
+    $("hsRestore").onclick = () => { S.layout = null; store.set("layout_" + H.KEY, null); setPlaying(false); buildHouse(); restart(true); toast("Đồ đạc đã về chỗ cũ."); };
     $("hsForget").onclick = () => { S.nav.forget(); updateHouse(true); };
     setupMic();
     // sân

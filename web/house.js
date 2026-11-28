@@ -15,16 +15,18 @@
 })(typeof self !== "undefined" ? self : this, function (C) {
   "use strict";
   const T = 0.05;                              // nửa bề dày tường (10 cm)
-  const BOUNDS = { x0: -4, x1: 4, y0: -3, y1: 3 };
+  /* ---------- BẢN ĐỒ 1: NHÀ 3 PHÒNG, 8 × 6 m ---------- */
+  const M3 = (() => {
+    const BOUNDS = { x0: -4, x1: 4, y0: -3, y1: 3 };
 
-  const ROOMS = {
+    const ROOMS = {
     khach: { name: "Phòng khách", rect: [-4, 0.6, -3, 3], floor: "wood", center: { x: -1.4, y: -1.0 } },
     bep:   { name: "Bếp",         rect: [0.6, 4, 0, 3],   floor: "tile", center: { x: 1.3, y: 0.45 } },
     ngu:   { name: "Phòng ngủ",   rect: [0.6, 4, -3, 0],  floor: "carpet", center: { x: 1.5, y: -0.8 } },
   };
 
   // Tường trong: x = 0,6 có 2 cửa rộng 1 m; y = 0 ngăn bếp và phòng ngủ
-  const WALLS = [
+    const WALLS = [
     { x: 0.6, y: -2.45, hx: T, hy: 0.55 },
     { x: 0.6, y: 0.0, hx: T, hy: 0.9 },
     { x: 0.6, y: 2.45, hx: T, hy: 0.55 },
@@ -32,14 +34,14 @@
   ];
 
   // Cửa + mốc ArUco gắn trên khung cửa (nhìn thấy từ cả hai phía)
-  const DOORS = [
+    const DOORS = [
     { id: "cua_bep", marker: 1, name: "cửa bếp", x: 0.6, y: 1.4, width: 1.0, axis: "x",
       side: { khach: { x: -0.05, y: 1.4 }, bep: { x: 1.2, y: 1.4 } } },
     { id: "cua_ngu", marker: 2, name: "cửa phòng ngủ", x: 0.6, y: -1.4, width: 1.0, axis: "x",
       side: { khach: { x: -0.05, y: -1.4 }, ngu: { x: 1.2, y: -1.4 } } },
   ];
   // Mốc phòng (dán cao trên tường) để robot tự nhận ra mình đang ở phòng nào
-  const ROOM_MARKERS = [
+    const ROOM_MARKERS = [
     { marker: 11, room: "khach", x: -4.0, y: -1.0, n: [1, 0] },
     { marker: 12, room: "khach", x: -1.6, y: 3.0, n: [0, -1] },
     { marker: 13, room: "khach", x: -1.6, y: -3.0, n: [0, 1] },
@@ -53,7 +55,7 @@
    * lớp YOLO (COCO) nếu có, điểm robot đứng khi "tới" đồ vật đó */
   const F = (id, room, model, label, x, y, w, d, h, face, extra = {}) =>
     Object.assign({ id, room, model, label, kind: "box", x, y, hx: w / 2, hy: d / 2, h, face }, extra);
-  const FURNITURE = [
+    const FURNITURE = [
     // Phòng khách
     F("sofa", "khach", "sofa", "Sofa", -3.5, 0.2, 0.85, 2.0, 0.8, "px", { yolo: "couch", approach: { x: -2.75, y: 1.65 } }),
     F("ban_tra", "khach", "coffee", "Bàn trà", -2.3, 0.2, 0.6, 1.0, 0.42, "px", { yolo: "dining table", approach: { x: -1.6, y: 0.2 } }),
@@ -76,19 +78,100 @@
     F("ban_lam_viec", "ngu", "desk", "Bàn làm việc", 3.45, -0.3, 1.0, 0.5, 0.75, "ny", { approach: { x: 3.4, y: -0.78 } }),
     { id: "cay_ngu", room: "ngu", model: "plant", label: "Chậu cây", kind: "cyl", x: 0.95, y: -0.3, r: 0.18, h: 0.9, yolo: "potted plant", approach: { x: 1.45, y: -0.55 } },
   ];
-  const DECOR = [
+    const DECOR = [
     { model: "rug", x: -2.35, y: 0.2, w: 2.1, d: 2.5, color: "#c9d3e3" },
     { model: "rug", x: 3.05, y: -0.95, w: 1.6, d: 0.5, color: "#e8d6d8" },
   ];
 
   // Đồ có thể dời chỗ (đồ gắn cố định như bồn rửa, bếp, sofa, giường, bộ bàn ăn thì giữ nguyên)
-  const MOVABLE = ["tivi", "ghe_banh", "cay_khach", "cay_ngu", "ban_tra", "tu_lanh", "ban_lam_viec", "ke_sach", "tu_quan_ao"];
+    const MOVABLE = ["tivi", "ghe_banh", "cay_khach", "cay_ngu", "ban_tra", "tu_lanh", "ban_lam_viec", "ke_sach", "tu_quan_ao"];
   // Đối tượng di chuyển: đi theo lộ trình vòng, nhường xe
-  const MOVERS = {
+    const MOVERS = {
     nguoi_khach: { kind: "mover", model: "person", label: "Người", r: 0.2, speed: 0.32, path: [[-0.9, -2.3], [-0.9, 1.9], [-1.6, 2.05], [-1.6, -1.5]], look: { shirt: 0xD62839, pants: 0x13315C, hair: 0x2B1D14 } },
     nguoi_bep: { kind: "mover", model: "person", label: "Người", r: 0.2, speed: 0.24, path: [[1.25, 2.05], [3.05, 2.05]], look: { shirt: 0xF4F6F9, pants: 0x0B2545, hair: 0x4A3426, apron: 0x1F4E8C } },
     meo: { kind: "mover", model: "cat", label: "Mèo", r: 0.13, speed: 0.4, path: [[1.0, -1.25], [1.95, -0.95], [1.95, -2.2], [1.3, -2.25]] },
   };
+    return { name: "Nhà 3 phòng (8 × 6 m)", START: { x: -1.4, y: -1.0, yaw: 0 }, BOUNDS, ROOMS, WALLS, DOORS, ROOM_MARKERS, FURNITURE, DECOR, MOVABLE, MOVERS };
+  })();
+  /* ---------- BẢN ĐỒ 2: NHÀ LỚN 5 PHÒNG, 14,4 × 10 m = 144 m² (gấp 3 nhà cũ) ---------- */
+  const M5 = (() => {
+    const F = (id, room, model, label, x, y, w, d, h, face, extra = {}) =>
+      Object.assign({ id, room, model, label, kind: "box", x, y, hx: w / 2, hy: d / 2, h, face }, extra);
+    return {
+      name: "Nhà lớn 5 phòng (14,4 × 10 m)",
+      START: { x: -3.4, y: -1.5, yaw: 0 },
+      BOUNDS: { x0: -7.2, x1: 7.2, y0: -5, y1: 5 },
+      ROOMS: {
+        khach: { name: "Phòng khách", rect: [-7.2, 0, -5, 5], floor: "wood", center: { x: -3.4, y: 0.0 } },
+        bep:   { name: "Bếp",          rect: [0, 7.2, 2, 5],   floor: "tile", center: { x: 3.2, y: 3.95 } },
+        ngu:   { name: "Phòng ngủ",    rect: [0, 4.4, -1.5, 2], floor: "carpet", center: { x: 2.0, y: 0.5 } },
+        tam:   { name: "Phòng tắm",    rect: [4.4, 7.2, -1.5, 2], floor: "tile", center: { x: 5.7, y: 0.4 } },
+        ngu2:  { name: "Phòng ngủ 2",  rect: [0, 7.2, -5, -1.5], floor: "carpet", center: { x: 3.0, y: -2.8 } },
+      },
+      WALLS: [
+        { x: 0, y: -4.4, hx: T, hy: 0.6 }, { x: 0, y: -1.4, hx: T, hy: 1.4 }, { x: 0, y: 2.0, hx: T, hy: 1.0 }, { x: 0, y: 4.5, hx: T, hy: 0.5 },
+        { x: 3.6, y: 2.0, hx: 3.6, hy: T }, { x: 3.6, y: -1.5, hx: 3.6, hy: T },
+        { x: 4.4, y: -0.75, hx: T, hy: 0.75 }, { x: 4.4, y: 1.5, hx: T, hy: 0.5 },
+      ],
+      DOORS: [
+        { id: "cua_bep", marker: 1, name: "cửa bếp", x: 0, y: 3.5, width: 1.0, axis: "x", side: { khach: { x: -0.65, y: 3.5 }, bep: { x: 0.6, y: 3.5 } } },
+        { id: "cua_ngu", marker: 2, name: "cửa phòng ngủ", x: 0, y: 0.5, width: 1.0, axis: "x", side: { khach: { x: -0.65, y: 0.5 }, ngu: { x: 0.6, y: 0.5 } } },
+        { id: "cua_ngu2", marker: 3, name: "cửa phòng ngủ 2", x: 0, y: -3.3, width: 1.0, axis: "x", side: { khach: { x: -0.65, y: -3.3 }, ngu2: { x: 0.6, y: -3.3 } } },
+        { id: "cua_tam", marker: 4, name: "cửa phòng tắm", x: 4.4, y: 0.5, width: 1.0, axis: "x", side: { ngu: { x: 3.75, y: 0.5 }, tam: { x: 5.0, y: 0.5 } } },
+      ],
+      ROOM_MARKERS: [
+        { marker: 11, room: "khach", x: -7.2, y: 0, n: [1, 0] }, { marker: 12, room: "khach", x: -3.5, y: 5, n: [0, -1] }, { marker: 13, room: "khach", x: -3.5, y: -5, n: [0, 1] },
+        { marker: 21, room: "bep", x: 7.2, y: 3.5, n: [-1, 0] }, { marker: 22, room: "bep", x: 1.2, y: 5, n: [0, -1] },
+        { marker: 31, room: "ngu", x: 2.2, y: 2.0, n: [0, -1] }, { marker: 32, room: "ngu", x: 2.2, y: -1.5, n: [0, 1] },
+        { marker: 41, room: "tam", x: 7.2, y: 0.3, n: [-1, 0] }, { marker: 42, room: "tam", x: 5.8, y: -1.5, n: [0, 1] },
+        { marker: 51, room: "ngu2", x: 7.2, y: -2.2, n: [-1, 0] }, { marker: 52, room: "ngu2", x: 1.2, y: -5, n: [0, 1] },
+      ],
+      FURNITURE: [
+        F("sofa", "khach", "sofa", "Sofa", -6.75, 0.0, 0.85, 2.0, 0.8, "px", { yolo: "couch", approach: { x: -5.7, y: 1.5 } }),
+        F("ban_tra", "khach", "coffee", "Bàn trà", -5.3, 0.0, 0.6, 1.0, 0.42, "px", { yolo: "dining table", approach: { x: -4.5, y: 0.0 } }),
+        F("tivi", "khach", "tv", "Tivi", -0.32, -1.6, 0.4, 1.4, 0.55, "nx", { yolo: "tv", approach: { x: -1.2, y: -1.6 } }),
+        F("ghe_banh", "khach", "armchair", "Ghế bành", -5.3, -3.8, 0.8, 0.8, 0.8, "py", { yolo: "chair", approach: { x: -5.3, y: -2.9 } }),
+        F("ke_sach", "khach", "shelf", "Kệ sách", -4.0, 4.78, 1.2, 0.36, 1.8, "ny", { approach: { x: -4.0, y: 4.0 } }),
+        { id: "cay_khach", room: "khach", model: "plant", label: "Chậu cây", kind: "cyl", x: -6.75, y: 4.55, r: 0.22, h: 1.1, yolo: "potted plant", approach: { x: -6.1, y: 3.9 } },
+        F("tu_lanh", "bep", "fridge", "Tủ lạnh", 5.3, 4.6, 0.7, 0.7, 1.8, "ny", { yolo: "refrigerator", approach: { x: 5.7, y: 3.95 } }),
+        F("bon_rua", "bep", "sink", "Bồn rửa", 2.4, 4.7, 0.9, 0.6, 0.9, "ny", { yolo: "sink", approach: { x: 2.4, y: 3.95 } }),
+        F("bep_nau", "bep", "stove", "Bếp nấu", 3.6, 4.7, 1.0, 0.6, 0.9, "ny", { yolo: "oven", approach: { x: 3.6, y: 3.95 } }),
+        F("ban_an", "bep", "dining", "Bàn ăn", 4.6, 3.0, 1.2, 0.8, 0.75, "py", { yolo: "dining table", approach: { x: 3.4, y: 3.0 } }),
+        F("ghe_an1", "bep", "chair", "Ghế ăn", 4.2, 2.42, 0.42, 0.42, 0.9, "py"),
+        F("ghe_an2", "bep", "chair", "Ghế ăn", 5.0, 2.42, 0.42, 0.42, 0.9, "py"),
+        F("ghe_an3", "bep", "chair", "Ghế ăn", 4.2, 3.58, 0.42, 0.42, 0.9, "ny"),
+        F("ghe_an4", "bep", "chair", "Ghế ăn", 5.0, 3.58, 0.42, 0.42, 0.9, "ny"),
+        F("giuong", "ngu", "bed", "Giường", 2.2, -0.65, 1.9, 1.6, 0.55, "py", { yolo: "bed", approach: { x: 2.2, y: 0.75 } }),
+        F("tu_quan_ao", "ngu", "wardrobe", "Tủ quần áo", 1.1, 1.7, 1.2, 0.55, 2.0, "ny", { approach: { x: 1.1, y: 0.95 }, custom: true }),
+        F("ban_lam_viec", "ngu", "desk", "Bàn làm việc", 3.2, 1.7, 1.0, 0.5, 0.75, "ny", { approach: { x: 3.2, y: 1.0 } }),
+        { id: "cay_ngu", room: "ngu", model: "plant", label: "Chậu cây", kind: "cyl", x: 4.0, y: -1.15, r: 0.18, h: 0.9, yolo: "potted plant", approach: { x: 3.6, y: -0.35 } },
+        F("lavabo", "tam", "sink", "Lavabo", 5.9, 1.65, 0.9, 0.6, 0.9, "ny", { yolo: "sink", approach: { x: 5.9, y: 0.9 } }),
+        F("ke_khan", "tam", "shelf", "Kệ khăn", 6.95, -0.6, 0.36, 1.2, 1.6, "nx", { approach: { x: 6.2, y: -0.6 } }),
+        F("giuong2", "ngu2", "bed", "Giường 2", 5.3, -3.6, 1.9, 1.6, 0.55, "nx", { yolo: "bed", approach: { x: 3.75, y: -3.4 } }),
+        F("ban_hoc", "ngu2", "desk", "Bàn học", 2.2, -4.72, 1.0, 0.5, 0.75, "py", { approach: { x: 2.2, y: -4.0 } }),
+        F("tu_ngu2", "ngu2", "wardrobe", "Tủ quần áo 2", 3.6, -1.85, 1.2, 0.55, 2.0, "ny", { approach: { x: 3.6, y: -2.6 }, custom: true }),
+      ],
+      DECOR: [
+        { model: "rug", x: -5.3, y: 0.0, w: 2.1, d: 2.5, color: "#c9d3e3" },
+        { model: "rug", x: 2.2, y: 0.55, w: 1.6, d: 0.5, color: "#e8d6d8" },
+        { model: "rug", x: 3.4, y: -3.3, w: 1.6, d: 1.0, color: "#dfe6d3" },
+      ],
+      MOVABLE: ["tivi", "ghe_banh", "cay_khach", "cay_ngu", "ban_tra", "tu_lanh", "ban_lam_viec", "ke_sach", "tu_quan_ao", "ban_hoc", "ke_khan"],
+      MOVERS: {
+        nguoi_khach: { kind: "mover", model: "person", label: "Người", r: 0.2, speed: 0.32, path: [[-2.0, -4.2], [-2.0, 3.8], [-3.2, 4.0], [-3.2, -3.0]], look: { shirt: 0xD62839, pants: 0x13315C, hair: 0x2B1D14 } },
+        nguoi_bep: { kind: "mover", model: "person", label: "Người", r: 0.2, speed: 0.24, path: [[1.3, 3.2], [2.9, 3.2]], look: { shirt: 0xF4F6F9, pants: 0x0B2545, hair: 0x4A3426, apron: 0x1F4E8C } },
+        meo: { kind: "mover", model: "cat", label: "Mèo", r: 0.13, speed: 0.4, path: [[1.2, -2.4], [3.0, -2.6], [3.0, -4.0], [1.2, -4.0]] },
+      },
+    };
+  })();
+  const MAPS = { nha3: M3, nha5: M5 };
+  let KEY, START, BOUNDS, ROOMS, WALLS, DOORS, ROOM_MARKERS, FURNITURE, DECOR, MOVABLE, MOVERS;
+  function use(k) {
+    const m = MAPS[k] || M3; KEY = MAPS[k] ? k : "nha3";
+    ({ START, BOUNDS, ROOMS, WALLS, DOORS, ROOM_MARKERS, FURNITURE, DECOR, MOVABLE, MOVERS } = m);
+    return KEY;
+  }
+  use("nha3");
   const segDist = (px, py, [ax, ay], [bx, by]) => {
     const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy || 1)));
     return Math.hypot(px - ax - t * vx, py - ay - t * vy);
@@ -106,7 +189,7 @@
       const f = FURNITURE.find(x => x.id === id);
       let ok = null;
       for (let k = 0; k < 600 && !ok; k++) {
-        const rk = Object.keys(ROOMS)[R.int(0, 2)], [a, b, c, d] = ROOMS[rk].rect;
+        const rk = Object.keys(ROOMS)[R.int(0, Object.keys(ROOMS).length - 1)], [a, b, c, d] = ROOMS[rk].rect;
         const face = ["px", "nx", "py", "ny"][R.int(0, 3)];
         const along = o => o === "px" || o === "nx";
         let hx = f.hx, hy = f.hy;
@@ -143,6 +226,11 @@
   // -------------------------------------------------------- hiểu lệnh
   const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/\s+/g, " ").trim();
   const LEXICON = [
+    ["lavabo", ["lavabo", "bon rua mat", "chau rua mat"]],
+    ["ke_khan", ["ke khan", "tu khan"]],
+    ["giuong2", ["giuong 2", "giuong hai", "giuong phong ngu 2"]],
+    ["tu_ngu2", ["tu quan ao 2", "tu phong ngu 2"]],
+    ["ban_hoc", ["ban hoc"]],
     ["tu_lanh", ["tu lanh", "tu mat", "fridge"]],
     ["tu_quan_ao", ["tu quan ao", "tu do", "tu ao"]],
     ["sofa", ["sofa", "so fa", "ghe dai", "ghe sopha"]],
@@ -157,20 +245,21 @@
     ["ban_lam_viec", ["ban lam viec", "ban hoc", "ban may tinh"]],
     ["cay", ["chau cay", "cay canh", "cay xanh", "cai cay", " cay"]],
   ];
-  const ROOM_WORDS = [["bep", ["nha bep", "phong bep", "bep"]], ["ngu", ["phong ngu"]], ["khach", ["phong khach"]]];
+  const ROOM_WORDS = [["ngu2", ["phong ngu 2", "phong ngu hai", "phong ngu nho", "phong con"]], ["tam", ["phong tam", "nha tam", "nha ve sinh", "toilet", "wc"]], ["bep", ["nha bep", "phong bep", "bep"]], ["ngu", ["phong ngu"]], ["khach", ["phong khach"]]];
 
   function parseCommand(text, robotRoom) {
     const t = " " + norm(text) + " ";
-    for (const [id, keys] of LEXICON) {
+    const LEX = LEXICON.filter(([id]) => id === "cay" || FURNITURE.some(f => f.id === id)), RW = ROOM_WORDS.filter(([id]) => ROOMS[id]);
+    for (const [id, keys] of LEX) {
       if (!keys.some(k => t.includes(k.startsWith(" ") ? k : k))) continue;
       if (id === "cay") {                          // có 2 chậu cây: ưu tiên phòng được nói tới, rồi phòng đang đứng
-        const r = ROOM_WORDS.find(([, ks]) => ks.some(k => t.includes(k) && k !== "bep"));
+        const r = RW.find(([, ks]) => ks.some(k => t.includes(k) && k !== "bep"));
         const room = r ? r[0] : robotRoom === "ngu" ? "ngu" : "khach";
         return { type: "object", id: room === "ngu" ? "cay_ngu" : "cay_khach" };
       }
       return { type: "object", id };
     }
-    for (const [id, keys] of ROOM_WORDS) if (keys.some(k => t.includes(k))) return { type: "room", id };
+    for (const [id, keys] of RW) if (keys.some(k => t.includes(k))) return { type: "room", id };
     return null;
   }
   const describe = q => !q ? "" : q.type === "room" ? ROOMS[q.id].name : FURNITURE.find(f => f.id === q.id).label;
@@ -296,7 +385,7 @@
             this.say(`Qua ${L.door.name} → vào <b>${ROOMS[L.to].name}</b>.`, "ok");
             if (this.leg < this.legs.length) this.set("tim_moc");
             else if (this.target.isRoom) { this.setGoal(sim, this.target.approach); this.set("toi_vat"); }
-            else this.set("tim_vat");
+            else { this.retries = 0; this.set("tim_vat"); }   // vào phòng đích: được tìm lại từ đầu
             return [0, 0];
           }
           return drive();
@@ -412,5 +501,8 @@
     get busy() { return !["rong", "xong", "that_bai", "va_cham"].includes(this.phase); }
   }
 
-  return { BOUNDS, ROOMS, WALLS, DOORS, ROOM_MARKERS, FURNITURE, DECOR, PHASE, MOVABLE, MOVERS, buildScenario, shuffleLayout, defaultMemory, parseCommand, describe, planRooms, roomAt, norm, Navigator };
+  return {
+    get KEY() { return KEY; }, get START() { return START; }, get BOUNDS() { return BOUNDS; }, get ROOMS() { return ROOMS; }, get WALLS() { return WALLS; },
+    get DOORS() { return DOORS; }, get ROOM_MARKERS() { return ROOM_MARKERS; }, get FURNITURE() { return FURNITURE; }, get DECOR() { return DECOR; },
+    get MOVABLE() { return MOVABLE; }, get MOVERS() { return MOVERS; }, MAPS, use, PHASE, buildScenario, shuffleLayout, defaultMemory, parseCommand, describe, planRooms, roomAt, norm, Navigator };
 });

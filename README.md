@@ -43,6 +43,8 @@ Từ đó, mỗi lần đẩy mã mới lên `main`, trang tự cập nhật sau
 
 **Chế độ Nhà thông minh** (mặc định): ra lệnh bằng chữ hoặc giọng nói, ví dụ "đi tới tủ lạnh" hay "vào phòng ngủ". Robot đọc mốc ArUco để tự nhận phòng, tìm đường qua các cửa theo sơ đồ mốc, nhận đồ vật bằng YOLO, rồi để bộ não PPO lái tới nơi. Khi bị chắn, robot quay một vòng quét siêu âm để tìm lối vòng. Có công tắc chạm. Có thể bật thêm đối tượng di chuyển: người ở phòng khách, người ở bếp và mèo; họ biết dừng nhường xe.
 
+**Bản đồ nhà** (tab 🏠 Kịch bản): Nhà 3 phòng 8 × 6 m, hoặc Nhà lớn 5 phòng 14,4 × 10 m (144 m², gấp 3) có thêm phòng tắm và phòng ngủ 2. Cùng bộ não PPO, mốc ArUco, YOLO, giọng nói, 2D/3D. Kiểm tra: `node test/house5_test.js` (65/65 nhiệm vụ).
+
 **Dời đồ đạc:** có nút xáo trộn ngẫu nhiên, hoặc chạm để dời từng món. Robot không được báo khi đồ bị dời. Nó có **trí nhớ đồ vật**: tìm ở phòng cũ không thấy thì đi tìm các phòng khác, và vừa đi vừa nhìn để cập nhật trí nhớ.
 
 Kiểm tra:
